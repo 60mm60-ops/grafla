@@ -24,7 +24,7 @@ const presetGradients = [
 
 // DOM elements
 let gradientPreview, cssOutput, toast, colorStopsContainer, historyGrid, presetsGrid;
-let linearControls, radialControls;
+let linearControls, radialControls, sidebar, sidebarOverlay, mobileMenuToggle;
 
 // Initialize
 function init() {
@@ -36,14 +36,51 @@ function init() {
     presetsGrid = document.getElementById('presetsGrid');
     linearControls = document.getElementById('linearControls');
     radialControls = document.getElementById('radialControls');
+    sidebar = document.getElementById('sidebar');
+    sidebarOverlay = document.getElementById('sidebarOverlay');
+    mobileMenuToggle = document.getElementById('mobileMenuToggle');
 
     setupEventListeners();
+    setupMobileMenu();
     renderColorStops();
     updateGradient();
     renderPresets();
     renderHistory();
     setupPanelNavigation();
-    showToast('グラフラ へようこそ！');
+    showToast('Grafla へようこそ！グラデーションを作成しましょう');
+}
+
+// Mobile menu functionality
+function setupMobileMenu() {
+    mobileMenuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        
+        // Toggle icon
+        const icon = mobileMenuToggle.querySelector('i');
+        if (sidebar.classList.contains('active')) {
+            icon.className = 'fas fa-times';
+        } else {
+            icon.className = 'fas fa-bars';
+        }
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        mobileMenuToggle.querySelector('i').className = 'fas fa-bars';
+    });
+
+    // Close sidebar when nav button is clicked on mobile
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (window.innerWidth <= 1200) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                mobileMenuToggle.querySelector('i').className = 'fas fa-bars';
+            }
+        });
+    });
 }
 
 // Panel navigation
@@ -151,7 +188,7 @@ function setupDirectionControl() {
 
     function updateHandlePosition(angle) {
         const radians = (angle - 90) * Math.PI / 180;
-        const radius = 40;
+        const radius = 50;
         const x = Math.cos(radians) * radius;
         const y = Math.sin(radians) * radius;
         handle.style.transform = `translate(calc(-50% + ${x}px), ${y}px)`;
@@ -219,6 +256,9 @@ function setupDirectionControl() {
 
     // Initialize handle position
     updateDirectionHandle();
+
+    // Make updateDirectionHandle globally accessible
+    window.updateDirectionHandle = updateDirectionHandle;
 }
 
 // Color stop management
@@ -353,10 +393,7 @@ function updateGradient() {
     gradientPreview.style.background = gradientCss;
     gradientPreview.style.opacity = globalOpacity / 100;
 
-    cssOutput.textContent = `background: ${gradientCss};
-${opacityCss}`;
-
-    saveToHistory();
+    cssOutput.textContent = `background: ${gradientCss};\n${opacityCss}`;
 }
 
 function hexToRgba(hex, alpha) {
@@ -371,6 +408,65 @@ function updateUIForGradientType() {
     const isLinearOrConic = currentGradientType === 'linear' || currentGradientType === 'conic';
     linearControls.classList.toggle('hidden', !isLinearOrConic);
     radialControls.classList.toggle('hidden', isLinearOrConic);
+}
+
+// Manual save functionality
+function manualSaveGradient() {
+    const nameInput = document.getElementById('saveNameInput');
+    const customName = nameInput.value.trim();
+    
+    const currentState = {
+        type: currentGradientType,
+        direction: currentDirection,
+        stops: JSON.parse(JSON.stringify(colorStops)), // Deep copy
+        opacity: globalOpacity,
+        radialCenter: { x: radialCenterX, y: radialCenterY },
+        radialShape: radialShape,
+        name: customName || `グラデーション ${new Date().toLocaleString('ja-JP')}`,
+        timestamp: Date.now(),
+        favorite: false,
+        manual: true
+    };
+
+    gradientHistory.unshift(currentState);
+    if (gradientHistory.length > 50) { // 履歴の上限を50に設定
+        gradientHistory = gradientHistory.slice(0, 50);
+    }
+    
+    localStorage.setItem('gradientHistory', JSON.stringify(gradientHistory));
+    renderHistory();
+    nameInput.value = '';
+    showToast(`"${currentState.name}" を保存しました！`);
+}
+
+// History item controls
+function toggleFavorite(index) {
+    gradientHistory[index].favorite = !gradientHistory[index].favorite;
+    localStorage.setItem('gradientHistory', JSON.stringify(gradientHistory));
+    renderHistory();
+    const status = gradientHistory[index].favorite ? 'お気に入りに追加' : 'お気に入りから削除';
+    showToast(`${status}しました`);
+}
+
+function deleteHistoryItem(index) {
+    const item = gradientHistory[index];
+    if (confirm(`"${item.name}" を削除しますか？`)) {
+        gradientHistory.splice(index, 1);
+        localStorage.setItem('gradientHistory', JSON.stringify(gradientHistory));
+        renderHistory();
+        showToast(`"${item.name}" を削除しました`);
+    }
+}
+
+function sortHistoryByFavorites() {
+    gradientHistory.sort((a, b) => {
+        if (a.favorite && !b.favorite) return -1;
+        if (!a.favorite && b.favorite) return 1;
+        return b.timestamp - a.timestamp;
+    });
+    localStorage.setItem('gradientHistory', JSON.stringify(gradientHistory));
+    renderHistory();
+    showToast('お気に入り順で並び替えました');
 }
 
 // Presets
@@ -416,7 +512,9 @@ function applyPreset(preset) {
             btn.classList.add('active');
         }
     });
-    updateDirectionHandle();
+    if (window.updateDirectionHandle) {
+        window.updateDirectionHandle();
+    }
     renderColorStops();
     updateUIForGradientType();
     updateGradient();
@@ -424,32 +522,13 @@ function applyPreset(preset) {
 }
 
 // History
-function saveToHistory() {
-    const currentState = {
-        type: currentGradientType,
-        direction: currentDirection,
-        stops: colorStops,
-        opacity: globalOpacity,
-        radialCenter: { x: radialCenterX, y: radialCenterY },
-        radialShape: radialShape
-    };
-    const historyItemIndex = gradientHistory.findIndex(item => JSON.stringify(item) === JSON.stringify(currentState));
-    if (historyItemIndex === -1) {
-        gradientHistory.unshift(currentState);
-        if (gradientHistory.length > 10) {
-            gradientHistory.pop();
-        }
-        localStorage.setItem('gradientHistory', JSON.stringify(gradientHistory));
-        renderHistory();
-    }
-}
-
 function renderHistory() {
     historyGrid.innerHTML = '';
     if (gradientHistory.length === 0) {
-        historyGrid.innerHTML = '<p style="color:#666; font-size:12px;">履歴はありません。</p>';
+        historyGrid.innerHTML = '<p style="color: var(--muted-text-color); font-size: 0.9rem; grid-column: 1 / -1; text-align: center; padding: 20px;">履歴はありません。手動保存またはプリセットを使用してください。</p>';
         return;
     }
+    
     gradientHistory.forEach((item, index) => {
         const historyEl = document.createElement('div');
         historyEl.classList.add('history-item');
@@ -466,6 +545,20 @@ function renderHistory() {
             cssString = `conic-gradient(from ${item.direction}, ${stopString})`;
         }
         historyEl.style.background = cssString;
+        historyEl.title = item.name || 'グラデーション';
+
+        // Controls
+        historyEl.innerHTML = `
+            <div class="history-item-controls">
+                <button class="history-control-btn favorite ${item.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${index})" title="${item.favorite ? 'お気に入りから削除' : 'お気に入りに追加'}">
+                    <i class="fas fa-star"></i>
+                </button>
+                <button class="history-control-btn delete" onclick="event.stopPropagation(); deleteHistoryItem(${index})" title="削除">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="history-timestamp">${new Date(item.timestamp).toLocaleDateString('ja-JP', {month: 'short', day: 'numeric'})}</div>
+        `;
 
         historyEl.addEventListener('click', () => {
             applyHistoryItem(item);
@@ -477,7 +570,7 @@ function renderHistory() {
 function applyHistoryItem(item) {
     currentGradientType = item.type;
     currentDirection = item.direction;
-    colorStops = item.stops;
+    colorStops = JSON.parse(JSON.stringify(item.stops)); // Deep copy
     globalOpacity = item.opacity;
     radialCenterX = item.radialCenter.x;
     radialCenterY = item.radialCenter.y;
@@ -500,18 +593,22 @@ function applyHistoryItem(item) {
     document.getElementById('radialCenterYValue').textContent = radialCenterY + '%';
     document.getElementById('radialShapeSelect').value = radialShape;
 
-    updateDirectionHandle();
+    if (window.updateDirectionHandle) {
+        window.updateDirectionHandle();
+    }
     renderColorStops();
     updateUIForGradientType();
     updateGradient();
-    showToast('履歴から復元しました！');
+    showToast(`"${item.name}" を復元しました！`);
 }
 
 function clearHistory() {
-    localStorage.removeItem('gradientHistory');
-    gradientHistory = [];
-    renderHistory();
-    showToast('履歴をクリアしました。');
+    if (confirm('すべての履歴を削除しますか？この操作は取り消せません。')) {
+        gradientHistory = [];
+        localStorage.removeItem('gradientHistory');
+        renderHistory();
+        showToast('履歴をすべて削除しました');
+    }
 }
 
 // Toast notification
@@ -520,20 +617,39 @@ function showToast(message) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000);
+    }, 4000);
 }
 
 // Export functions
 function copyCSSCode() {
     const css = cssOutput.textContent;
     navigator.clipboard.writeText(css).then(() => {
-        showToast('CSSコードをコピーしました！');
+        showToast('CSSコードをクリップボードにコピーしました！');
     }).catch(err => {
         console.error('Failed to copy CSS: ', err);
+        showToast('CSSのコピーに失敗しました');
+        
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = css;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('CSSコードをコピーしました！');
+        } catch (err) {
+            showToast('コピーに失敗しました。手動でコピーしてください。');
+        }
+        document.body.removeChild(textArea);
     });
 }
 
 function exportAsImage(format) {
+    if (typeof domtoimage === 'undefined') {
+        showToast('画像エクスポート機能が利用できません');
+        return;
+    }
+
     const node = document.getElementById('gradientPreview');
 
     // Make the preview background fully opaque temporarily for correct image export
@@ -544,11 +660,13 @@ function exportAsImage(format) {
         quality: 1,
         style: {
             opacity: 1
-        }
+        },
+        width: node.offsetWidth * 2,
+        height: node.offsetHeight * 2
     };
 
     if (format === 'jpeg') {
-        options.quality = 0.95; // JPEGは圧縮率を指定
+        options.quality = 0.95;
     }
 
     domtoimage.toBlob(node, options)
@@ -556,16 +674,16 @@ function exportAsImage(format) {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `grafla-gradient.${format}`;
+            link.download = `grafla-gradient-${Date.now()}.${format}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            showToast(`${format.toUpperCase()}として保存しました！`);
+            showToast(`${format.toUpperCase()}ファイルとして保存しました！`);
         })
         .catch(function (error) {
-            console.error('oops, something went wrong!', error);
-            showToast('画像の書き出しに失敗しました。');
+            console.error('Export failed:', error);
+            showToast('画像の書き出しに失敗しました');
         })
         .finally(() => {
             // Restore original opacity
