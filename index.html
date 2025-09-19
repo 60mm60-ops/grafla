@@ -3,1090 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>グラフラ - グラデーション作成ツール</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0a0a0a;
-            color: #fff;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 20px;
-            border-bottom: 1px solid #444;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .btn {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            padding: 8px 16px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: #444;
-        }
-
-        .btn.primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: #667eea;
-        }
-
-        .app-layout {
-            display: flex;
-            flex-direction: column;
-            min-height: calc(100vh - 70px);
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .gradient-preview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            position: relative;
-            border: 2px solid #333;
-            overflow: hidden;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .preview-info {
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .gradient-preview:hover .preview-info {
-            opacity: 1;
-        }
-
-        .controls-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .panel {
-            background: #1a1a1a;
-            border-radius: 12px;
-            border: 1px solid #333;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid #333;
-            font-weight: 600;
-            color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #222;
-        }
-
-        .panel-content {
-            padding: 20px;
-        }
-
-        .control-group {
-            margin-bottom: 20px;
-        }
-
-        .control-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .control-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #ccc;
-            font-size: 13px;
-        }
-
-        .control-input {
-            width: 100%;
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 10px;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .slider {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 8px;
-            border-radius: 4px;
-            background: #333;
-            outline: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            cursor: pointer;
-            border: 2px solid #fff;
-        }
-
-        .slider-value {
-            min-width: 50px;
-            text-align: center;
-            background: #333;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #ccc;
-        }
-
-        .gradient-types {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .gradient-type {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 12px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .gradient-type.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: #667eea;
-        }
-
-        .direction-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .direction-btn {
-            aspect-ratio: 1;
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            transition: all 0.2s;
-        }
-
-        .direction-btn.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: #667eea;
-        }
-
-        .color-stops-section {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .color-stop {
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-
-        .color-stop-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .color-stop-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #aaa;
-        }
-
-        .color-input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .color-picker {
-            width: 40px;
-            height: 35px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .hex-input {
-            flex: 1;
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 8px;
-            color: #fff;
-            font-family: monospace;
-            font-size: 12px;
-        }
-
-        .position-opacity-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .mini-btn {
-            background: #444;
-            border: none;
-            border-radius: 4px;
-            padding: 4px 8px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 10px;
-            transition: all 0.2s;
-        }
-
-        .mini-btn:hover {
-            background: #555;
-        }
-
-        .mini-btn.danger {
-            background: #d32f2f;
-        }
-
-        .css-output {
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #e6edf3;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-bottom: 10px;
-            min-height: 60px;
-        }
-
-        .copy-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 6px;
-            padding: 10px;
-            color: white;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .export-options {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .export-btn {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            padding: 10px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            transform: translateX(120%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: none;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-            display: block;
-        }
-
-        /* タブレット対応 */
-        @media (max-width: 768px) {
-            .header {
-                padding: 10px 15px;
-            }
-
-            .header-controls {
-                gap: 5px;
-            }
-
-            .btn {
-                padding: 6px 10px;
-                font-size: 11px;
-            }
-
-            .main-content {
-                padding: 15px;
-                gap: 15px;
-            }
-
-            .gradient-preview {
-                height: 150px;
-            }
-
-            .controls-container {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .panel-content {
-                padding: 15px;
-            }
-
-            .position-opacity-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-
-        /* スマートフォン対応 */
-        @media (max-width: 480px) {
-            .header {
-                padding: 8px 10px;
-            }
-
-            .logo {
-                font-size: 1.2rem;
-            }
-
-            .header-controls {
-                flex-wrap: wrap;
-                gap: 3px;
-            }
-
-            .btn {
-                padding: 5px 8px;
-                font-size: 10px;
-            }
-
-            .main-content {
-                padding: 10px;
-                gap: 10px;
-            }
-
-            .gradient-preview {
-                height: 120px;
-                border-radius: 8px;
-            }
-
-            .panel {
-                border-radius: 8px;
-            }
-
-            .panel-content {
-                padding: 12px;
-            }
-
-            .control-group {
-                margin-bottom: 15px;
-            }
-
-            .export-options {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-
-            .gradient-types {
-                grid-template-columns: 1fr;
-                gap: 6px;
-            }
-
-            .gradient-type {
-                padding: 12px;
-                font-size: 13px;
-            }
-
-            .direction-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 6px;
-            }
-
-            .color-stop {
-                padding: 12px;
-            }
-        }
-
-        /* 極小画面対応 */
-        @media (max-width: 320px) {
-            .header-controls {
-                display: none;
-            }
-
-            .main-content {
-                padding: 8px;
-            }
-
-            .gradient-preview {
-                height: 100px;
-            }
-
-            .panel-content {
-                padding: 10px;
-            }
-
-            .direction-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .noise-overlay {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            background-image: 
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.02) 50%, transparent 75%);
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .gradient-preview.noise .noise-overlay {
-            opacity: 1;
-        }
-
-        .gradient-animation {
-            animation: gradient-shift 3s ease-in-out infinite;
-        }
-
-        @keyframes gradient-shift {
-            0%, 100% { filter: hue-rotate(0deg); }
-            50% { filter: hue-rotate(30deg); }
-        }
-
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .quick-btn {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            padding: 8px 12px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 11px;
-            transition: all 0.2s;
-        }
-
-        .quick-btn:hover {
-            background: #444;
-        }
-
-        .quick-btn.primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-    </style>
+    <title>グラデーションジェネレーター</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
 </head>
 <body>
-    <header class="header">
-        <div class="logo">グラフラ</div>
-        <div class="header-controls">
-            <button class="btn" onclick="newProject()">新規</button>
-            <button class="btn" onclick="importGradient()">読込</button>
-            <button class="btn primary" onclick="exportProject()">保存</button>
-        </div>
-    </header>
 
-    <div class="app-layout">
-        <div class="main-content">
-            <div class="gradient-preview" id="gradientPreview">
-                <div class="noise-overlay"></div>
-                <div class="preview-info">
-                    <h3>グラデーションプレビュー</h3>
-                    <p>設定を変更してカスタマイズ</p>
-                </div>
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fas fa-palette"></i>
+                <h1>Grafla</h1>
             </div>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-target="panel-colors">
+                    <i class="fas fa-swatchbook"></i>
+                    カラー
+                </button>
+                <button class="nav-btn" data-target="panel-settings">
+                    <i class="fas fa-sliders-h"></i>
+                    設定
+                </button>
+                <button class="nav-btn" data-target="panel-presets">
+                    <i class="fas fa-history"></i>
+                    履歴・プリセット
+                </button>
+                <button class="nav-btn" data-target="panel-export">
+                    <i class="fas fa-file-export"></i>
+                    書き出し
+                </button>
+            </nav>
+        </aside>
 
-            <div class="controls-container">
-                <!-- グラデーションタイプ -->
-                <div class="panel">
-                    <div class="panel-header">グラデーションタイプ</div>
-                    <div class="panel-content">
-                        <div class="gradient-types">
-                            <div class="gradient-type active" data-type="linear">リニア</div>
-                            <div class="gradient-type" data-type="radial">放射状</div>
-                            <div class="gradient-type" data-type="conic">円錐</div>
+        <main class="content-area">
+            <div class="preview-panel">
+                <div id="gradientPreview" class="gradient-preview"></div>
+            </div>
+            
+            <div class="controls-panel">
+                <div id="panel-colors" class="control-panel active">
+                    <div class="panel-section">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i class="fas fa-fill-drip"></i> カラーコントローラー</h3>
+                            <button class="mini-btn" onclick="addColorStop()">
+                                <i class="fas fa-plus"></i>
+                                ストップ追加
+                            </button>
                         </div>
-                        
+                        <div id="colorStopsContainer"></div>
+                    </div>
+                </div>
+
+                <div id="panel-settings" class="control-panel">
+                    <div class="panel-section">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i class="fas fa-cogs"></i> グラデーション設定</h3>
+                        </div>
                         <div class="control-group">
-                            <label class="control-label">方向</label>
-                            <div class="direction-grid">
-                                <div class="direction-btn" data-direction="315deg">↖</div>
-                                <div class="direction-btn" data-direction="0deg">↑</div>
-                                <div class="direction-btn" data-direction="45deg">↗</div>
-                                <div class="direction-btn" data-direction="270deg">←</div>
-                                <div class="direction-btn active" data-direction="135deg">●</div>
-                                <div class="direction-btn" data-direction="90deg">→</div>
+                            <label class="control-label">グラデーションタイプ</label>
+                            <div class="button-group">
+                                <button class="type-btn gradient-type active" data-type="linear">
+                                    <i class="fas fa-arrows-alt-h"></i>
+                                    線形
+                                </button>
+                                <button class="type-btn gradient-type" data-type="radial">
+                                    <i class="fas fa-bullseye"></i>
+                                    放射状
+                                </button>
+                                <button class="type-btn gradient-type" data-type="conic">
+                                    <i class="fas fa-braille"></i>
+                                    円錐形
+                                </button>
                             </div>
                         </div>
 
-                        <div class="control-group">
-                            <label class="control-label">角度</label>
+                        <div class="control-group" id="linearControls">
+                            <label class="control-label">角度・開始点</label>
+                            <div id="directionControl" class="direction-control">
+                                <div id="directionHandle" class="direction-handle"></div>
+                            </div>
                             <div class="slider-group">
-                                <input type="range" class="slider" id="angleSlider" min="0" max="360" value="135">
+                                <input type="range" id="angleSlider" class="slider" min="0" max="360" value="135">
                                 <span class="slider-value" id="angleValue">135°</span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- カラーストップ -->
-                <div class="panel">
-                    <div class="panel-header">
-                        カラー設定
-                        <button class="mini-btn" onclick="addColorStop()">+ 追加</button>
-                    </div>
-                    <div class="panel-content">
-                        <div class="quick-actions">
-                            <button class="quick-btn primary" onclick="generateRandomGradient()">ランダム</button>
-                            <button class="quick-btn" onclick="addColorStop()">色追加</button>
-                        </div>
-                        <div class="color-stops-section" id="colorStopsContainer">
-                            <!-- Color stops will be populated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- エフェクト設定 -->
-                <div class="panel">
-                    <div class="panel-header">エフェクト</div>
-                    <div class="panel-content">
-                        <div class="control-group">
-                            <input type="checkbox" id="animateGradient">
-                            <label for="animateGradient" class="control-label" style="display: inline; margin-left: 8px;">アニメーション</label>
+                        <div id="radialControls" class="radial-controls hidden">
+                            <div class="control-group" id="radialShape">
+                                <label class="control-label">形状</label>
+                                <select id="radialShapeSelect" class="select-field">
+                                    <option value="circle">円形</option>
+                                    <option value="ellipse">楕円形</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">中心X</label>
+                                <div class="slider-group">
+                                    <input type="range" id="radialCenterX" class="slider" min="0" max="100" value="50">
+                                    <span class="slider-value" id="radialCenterXValue">50%</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">中心Y</label>
+                                <div class="slider-group">
+                                    <input type="range" id="radialCenterY" class="slider" min="0" max="100" value="50">
+                                    <span class="slider-value" id="radialCenterYValue">50%</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="control-group">
-                            <input type="checkbox" id="noiseOverlay">
-                            <label for="noiseOverlay" class="control-label" style="display: inline; margin-left: 8px;">ノイズ効果</label>
-                        </div>
-
-                        <div class="control-group">
-                            <label class="control-label">透明度</label>
+                            <label class="control-label">全体透明度</label>
                             <div class="slider-group">
-                                <input type="range" class="slider" id="globalOpacity" min="0" max="100" value="100">
+                                <input type="range" id="globalOpacity" class="slider" min="0" max="100" value="100">
                                 <span class="slider-value" id="opacityValue">100%</span>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <label class="control-label">エフェクト</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="animateGradient"> アニメーション</label>
+                                <label><input type="checkbox" id="noiseOverlay"> ノイズ</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- エクスポート -->
-                <div class="panel">
-                    <div class="panel-header">エクスポート</div>
-                    <div class="panel-content">
-                        <div class="export-options">
-                            <button class="export-btn" onclick="exportAsCSS()">CSS</button>
-                            <button class="export-btn" onclick="exportAsImage()">画像</button>
+                <div id="panel-presets" class="control-panel">
+                    <div class="panel-section">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i class="fas fa-bookmark"></i> プリセット</h3>
                         </div>
-                        
-                        <div class="css-output" id="cssOutput">background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);</div>
-                        <button class="copy-btn" onclick="copyCSSCode()">CSSをコピー</button>
+                        <div id="presetsGrid" class="preset-grid"></div>
+                    </div>
+
+                    <div class="panel-section">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i class="fas fa-history"></i> 履歴</h3>
+                            <button class="mini-btn danger" onclick="clearHistory()">履歴をクリア</button>
+                        </div>
+                        <div id="historyGrid" class="history-grid"></div>
+                    </div>
+                </div>
+
+                <div id="panel-export" class="control-panel">
+                    <div class="panel-section">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i class="fas fa-file-export"></i> 書き出し</h3>
+                        </div>
+                        <div class="button-grid">
+                            <button class="action-btn" onclick="copyCSSCode()">
+                                <i class="fas fa-code"></i>
+                                CSSをコピー
+                            </button>
+                            <button class="action-btn" onclick="exportAsImage('png')">
+                                <i class="fas fa-image"></i>
+                                PNGとして
+                            </button>
+                            <button class="action-btn" onclick="exportAsImage('jpeg')">
+                                <i class="fas fa-image"></i>
+                                JPEGとして
+                            </button>
+                        </div>
+                        <textarea id="cssOutput" class="css-output" readonly></textarea>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <div class="toast" id="toast">コピーしました！</div>
+    <div id="toast" class="toast"></div>
 
-    <script>
-        // Global variables
-        let colorStops = [
-            { color: '#667eea', position: 0, opacity: 1, id: 1 },
-            { color: '#764ba2', position: 100, opacity: 1, id: 2 }
-        ];
-
-        let nextId = 3;
-        let currentGradientType = 'linear';
-        let currentDirection = '135deg';
-        let globalOpacity = 100;
-
-        // DOM elements
-        let gradientPreview, cssOutput, toast, colorStopsContainer;
-
-        // Initialize
-        function init() {
-            gradientPreview = document.getElementById('gradientPreview');
-            cssOutput = document.getElementById('cssOutput');
-            toast = document.getElementById('toast');
-            colorStopsContainer = document.getElementById('colorStopsContainer');
-
-            setupEventListeners();
-            renderColorStops();
-            updateGradient();
-            showToast('グラフラ へようこそ！');
-        }
-
-        // Event listeners
-        function setupEventListeners() {
-            // Gradient type selection
-            document.querySelectorAll('.gradient-type').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.gradient-type').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentGradientType = e.target.dataset.type;
-                    updateGradient();
-                });
-            });
-
-            // Direction buttons
-            document.querySelectorAll('.direction-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentDirection = e.target.dataset.direction;
-                    document.getElementById('angleSlider').value = parseInt(currentDirection);
-                    document.getElementById('angleValue').textContent = currentDirection;
-                    updateGradient();
-                });
-            });
-
-            // Angle slider
-            const angleSlider = document.getElementById('angleSlider');
-            angleSlider.addEventListener('input', (e) => {
-                currentDirection = e.target.value + 'deg';
-                document.getElementById('angleValue').textContent = currentDirection;
-                updateGradient();
-            });
-
-            // Effects
-            document.getElementById('animateGradient').addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    gradientPreview.classList.add('gradient-animation');
-                } else {
-                    gradientPreview.classList.remove('gradient-animation');
-                }
-            });
-
-            document.getElementById('noiseOverlay').addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    gradientPreview.classList.add('noise');
-                } else {
-                    gradientPreview.classList.remove('noise');
-                }
-            });
-
-            document.getElementById('globalOpacity').addEventListener('input', (e) => {
-                globalOpacity = e.target.value;
-                document.getElementById('opacityValue').textContent = e.target.value + '%';
-                updateGradient();
-            });
-        }
-
-        // Color stop management
-        function addColorStop() {
-            const newPosition = Math.random() * 100;
-            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe'];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
-            colorStops.push({
-                color: randomColor,
-                position: newPosition,
-                opacity: 1,
-                id: nextId++
-            });
-
-            renderColorStops();
-            updateGradient();
-        }
-
-        function removeColorStop(id) {
-            if (colorStops.length > 2) {
-                colorStops = colorStops.filter(stop => stop.id !== id);
-                renderColorStops();
-                updateGradient();
-            }
-        }
-
-        function updateColorStop(id, property, value) {
-            const stop = colorStops.find(s => s.id === id);
-            if (stop) {
-                stop[property] = value;
-                updateGradient();
-                if (property === 'color') {
-                    renderColorStops();
-                }
-            }
-        }
-
-        function renderColorStops() {
-            colorStopsContainer.innerHTML = colorStops.map((stop, index) => `
-                <div class="color-stop">
-                    <div class="color-stop-header">
-                        <span class="color-stop-title">カラー ${index + 1}</span>
-                        ${colorStops.length > 2 ? `<button class="mini-btn danger" onclick="removeColorStop(${stop.id})">削除</button>` : ''}
-                    </div>
-                    <div class="color-input-row">
-                        <input type="color" class="color-picker" value="${stop.color}" 
-                               onchange="updateColorStop(${stop.id}, 'color', this.value)">
-                        <input type="text" class="hex-input" value="${stop.color}" 
-                               oninput="updateColorStop(${stop.id}, 'color', this.value)" placeholder="#FF0000">
-                    </div>
-                    <div class="position-opacity-grid">
-                        <div class="control-group">
-                            <label class="control-label">位置</label>
-                            <div class="slider-group">
-                                <input type="range" class="slider" min="0" max="100" value="${stop.position}"
-                                       oninput="updateColorStop(${stop.id}, 'position', parseInt(this.value))">
-                                <span class="slider-value">${stop.position}%</span>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label">透明度</label>
-                            <div class="slider-group">
-                                <input type="range" class="slider" min="0" max="100" value="${stop.opacity * 100}"
-                                       oninput="updateColorStop(${stop.id}, 'opacity', this.value / 100)">
-                                <span class="slider-value">${Math.round(stop.opacity * 100)}%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Gradient generation
-        function updateGradient() {
-            const sortedStops = [...colorStops].sort((a, b) => a.position - b.position);
-            
-            const stopStrings = sortedStops.map(stop => {
-                const rgba = hexToRgba(stop.color, stop.opacity);
-                return `${rgba} ${stop.position}%`;
-            });
-
-            let gradientCSS;
-            switch(currentGradientType) {
-                case 'linear':
-                    gradientCSS = `linear-gradient(${currentDirection}, ${stopStrings.join(', ')})`;
-                    break;
-                case 'radial':
-                    gradientCSS = `radial-gradient(circle, ${stopStrings.join(', ')})`;
-                    break;
-                case 'conic':
-                    gradientCSS = `conic-gradient(from ${currentDirection}, ${stopStrings.join(', ')})`;
-                    break;
-            }
-
-            gradientPreview.style.background = gradientCSS;
-            gradientPreview.style.opacity = globalOpacity / 100;
-            cssOutput.textContent = `background: ${gradientCSS};`;
-        }
-
-        // Helper functions
-        function hexToRgba(hex, alpha = 1) {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return alpha === 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-
-        // Random gradient generation
-        function generateRandomGradient() {
-            const numColors = 2 + Math.floor(Math.random() * 3);
-            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
-            
-            colorStops = [];
-            for (let i = 0; i < numColors; i++) {
-                colorStops.push({
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    position: (100 / (numColors - 1)) * i,
-                    opacity: 0.8 + Math.random() * 0.2,
-                    id: nextId++
-                });
-            }
-            
-            const directions = ['0deg', '45deg', '90deg', '135deg', '180deg', '225deg', '270deg', '315deg'];
-            currentDirection = directions[Math.floor(Math.random() * directions.length)];
-            
-            document.getElementById('angleSlider').value = parseInt(currentDirection);
-            document.getElementById('angleValue').textContent = currentDirection;
-            
-            renderColorStops();
-            updateGradient();
-            showToast('ランダムグラデーション生成！');
-        }
-
-        // Export functions
-        function exportAsCSS() {
-            const css = cssOutput.textContent;
-            downloadText(css, 'gradient.css', 'text/css');
-        }
-
-        function exportAsImage() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1920;
-            canvas.height = 1080;
-            const ctx = canvas.getContext('2d');
-            
-            const sortedStops = [...colorStops].sort((a, b) => a.position - b.position);
-            let gradient;
-            
-            if (currentGradientType === 'linear') {
-                const angle = parseInt(currentDirection) * Math.PI / 180;
-                const x1 = canvas.width / 2 - Math.cos(angle) * canvas.width / 2;
-                const y1 = canvas.height / 2 - Math.sin(angle) * canvas.height / 2;
-                const x2 = canvas.width / 2 + Math.cos(angle) * canvas.width / 2;
-                const y2 = canvas.height / 2 + Math.sin(angle) * canvas.height / 2;
-                gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-            } else {
-                gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2);
-            }
-            
-            sortedStops.forEach(stop => {
-                const rgba = hexToRgba(stop.color, stop.opacity);
-                gradient.addColorStop(stop.position / 100, rgba);
-            });
-            
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'gradient.png';
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-        }
-
-        function downloadText(content, filename, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // UI functions
-        function showToast(message) {
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        function copyCSSCode() {
-            navigator.clipboard.writeText(cssOutput.textContent).then(() => {
-                showToast('CSSコードをコピーしました！');
-            });
-        }
-
-        // Project management
-        function newProject() {
-            if (confirm('新しいプロジェクトを開始しますか？')) {
-                colorStops = [
-                    { color: '#667eea', position: 0, opacity: 1, id: 1 },
-                    { color: '#764ba2', position: 100, opacity: 1, id: 2 }
-                ];
-                nextId = 3;
-                currentGradientType = 'linear';
-                currentDirection = '135deg';
-                globalOpacity = 100;
-                
-                document.getElementById('globalOpacity').value = 100;
-                document.getElementById('opacityValue').textContent = '100%';
-                document.getElementById('angleSlider').value = 135;
-                document.getElementById('angleValue').textContent = '135°';
-                
-                document.querySelectorAll('.gradient-type').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.type === 'linear');
-                });
-                
-                document.querySelectorAll('.direction-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.direction === '135deg');
-                });
-                
-                document.getElementById('animateGradient').checked = false;
-                document.getElementById('noiseOverlay').checked = false;
-                gradientPreview.classList.remove('gradient-animation', 'noise');
-                
-                renderColorStops();
-                updateGradient();
-                showToast('新しいプロジェクトを開始しました');
-            }
-        }
-
-        function exportProject() {
-            const project = {
-                name: `Gradient_${new Date().toISOString().slice(0,10)}`,
-                colorStops: colorStops,
-                gradientType: currentGradientType,
-                direction: currentDirection,
-                globalOpacity: globalOpacity,
-                effects: {
-                    animation: document.getElementById('animateGradient').checked,
-                    noise: document.getElementById('noiseOverlay').checked
-                }
-            };
-            
-            const json = JSON.stringify(project, null, 2);
-            downloadText(json, `gradient-project-${Date.now()}.json`, 'application/json');
-            showToast('プロジェクトを保存しました');
-        }
-
-        function importGradient() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const project = JSON.parse(e.target.result);
-                            
-                            if (!project.colorStops || !Array.isArray(project.colorStops)) {
-                                throw new Error('Invalid project format');
-                            }
-                            
-                            colorStops = project.colorStops.map(stop => ({ 
-                                ...stop, 
-                                id: nextId++,
-                                opacity: stop.opacity || 1 
-                            }));
-                            currentGradientType = project.gradientType || 'linear';
-                            currentDirection = project.direction || '135deg';
-                            globalOpacity = project.globalOpacity || 100;
-                            
-                            document.getElementById('globalOpacity').value = globalOpacity;
-                            document.getElementById('opacityValue').textContent = globalOpacity + '%';
-                            document.getElementById('angleSlider').value = parseInt(currentDirection);
-                            document.getElementById('angleValue').textContent = currentDirection;
-                            
-                            document.querySelectorAll('.gradient-type').forEach(btn => {
-                                btn.classList.toggle('active', btn.dataset.type === currentGradientType);
-                            });
-                            
-                            document.querySelectorAll('.direction-btn').forEach(btn => {
-                                btn.classList.toggle('active', btn.dataset.direction === currentDirection);
-                            });
-                            
-                            if (project.effects) {
-                                document.getElementById('animateGradient').checked = project.effects.animation || false;
-                                document.getElementById('noiseOverlay').checked = project.effects.noise || false;
-                                
-                                if (project.effects.animation) {
-                                    gradientPreview.classList.add('gradient-animation');
-                                }
-                                if (project.effects.noise) {
-                                    gradientPreview.classList.add('noise');
-                                }
-                            }
-                            
-                            renderColorStops();
-                            updateGradient();
-                            
-                            const projectName = project.name || 'プロジェクト';
-                            showToast(`${projectName} を読み込みました`);
-                            
-                        } catch (error) {
-                            showToast('ファイル読み込みに失敗しました');
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-            };
-            input.click();
-        }
-
-        // Start when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
