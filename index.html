@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>グラフラ</title>
+    <title>グラデヒント - プロ仕様グラデーション作成ツール</title>
     <style>
         * {
             margin: 0;
@@ -21,7 +21,7 @@
 
         .app-container {
             display: grid;
-            grid-template-columns: 350px 1fr 320px;
+            grid-template-columns: 320px 1fr;
             grid-template-rows: 60px 1fr;
             height: 100vh;
             gap: 1px;
@@ -38,47 +38,6 @@
             border-bottom: 1px solid #444;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .btn {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            padding: 8px 16px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: #444;
-            border-color: #666;
-        }
-
-        .btn.primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-color: #667eea;
-        }
-
-        .btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
         .sidebar-left {
             background: #1a1a1a;
             border-right: 1px solid #333;
@@ -86,11 +45,11 @@
             padding: 20px;
         }
 
-        .main-canvas {
+        .main-content {
             background: #111;
             display: flex;
             flex-direction: column;
-            position: relative;
+            overflow: hidden;
         }
 
         .canvas-toolbar {
@@ -101,57 +60,32 @@
             align-items: center;
             justify-content: space-between;
             gap: 15px;
+            flex-shrink: 0;
         }
 
-        .canvas-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .gradient-preview {
+        .content-grid {
             flex: 1;
-            margin: 20px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            min-height: 400px;
-            border: 2px solid #333;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            padding: 20px;
             overflow: hidden;
         }
 
-        .gradient-preview.fullscreen {
-            margin: 0;
-            border-radius: 0;
-            border: none;
+        .gradient-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            position: relative;
+            border: 2px solid #333;
+            overflow: hidden;
+            min-height: 250px;
+            max-height: 400px;
         }
 
-        .preview-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.1);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .preview-overlay:hover {
-            opacity: 1;
-        }
-
-        .preview-info {
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .sidebar-right {
+        .controls-panel {
             background: #1a1a1a;
-            border-left: 1px solid #333;
+            border-radius: 15px;
+            border: 1px solid #333;
             overflow-y: auto;
             padding: 20px;
         }
@@ -597,17 +531,31 @@
             .app-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: 60px 1fr;
-                height: 100vh;
             }
             
-            .sidebar-left, .sidebar-right {
+            .sidebar-left {
                 display: none;
             }
             
-            .main-canvas {
-                display: flex;
-                flex-direction: column;
-                padding: 0;
+            .main-content {
+                overflow: visible;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .gradient-preview {
+                min-height: 200px;
+                max-height: 250px;
+                order: 2;
+            }
+            
+            .controls-panel {
+                order: 1;
+                max-height: none;
             }
             
             .canvas-toolbar {
@@ -621,52 +569,174 @@
                 gap: 8px;
             }
             
-            .gradient-preview {
-                flex: 1;
-                margin: 10px;
-                min-height: 200px;
-                position: relative;
+            .color-stops-section {
+                max-height: 300px;
             }
             
-            /* モバイル用コントロールパネル */
-            .mobile-controls {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: #1a1a1a;
-                border-top: 1px solid #333;
-                max-height: 50vh;
-                overflow-y: auto;
-                z-index: 1000;
-                transform: translateY(100%);
-                transition: transform 0.3s ease;
+            .color-stop {
+                margin-bottom: 12px;
+                padding: 12px;
             }
             
-            .mobile-controls.open {
-                transform: translateY(0);
+            .position-opacity-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
             }
             
-            .mobile-controls-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 15px 20px;
-                border-bottom: 1px solid #333;
-                background: #222;
+            .export-options {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
             }
             
-            .mobile-tab-buttons {
-                display: flex;
+            .history-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 8px;
+            }
+            
+            .history-item {
+                height: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 10px;
+            }
+            
+            .logo {
+                font-size: 1.2rem;
+            }
+            
+            .header-controls {
+                gap: 5px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            
+            .content-grid {
+                padding: 10px;
                 gap: 10px;
             }
             
-            .mobile-tab-btn {
-                background: #333;
-                border: 1px solid #555;
-                border-radius: 6px;
-                padding: 8px 12px;
-                color: #fff;
+            .gradient-preview {
+                min-height: 150px;
+                max-height: 180px;
+                border-radius: 10px;
+            }
+            
+            .controls-panel {
+                border-radius: 10px;
+                padding: 15px;
+            }
+            
+            .panel {
+                margin-bottom: 15px;
+            }
+            
+            .panel-content {
+                padding: 15px;
+            }
+            
+            .color-stop {
+                padding: 10px;
+            }
+            
+            .export-options {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .export-btn {
+                padding: 10px;
+                font-size: 12px;
+            }
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #444;
+            border-color: #666;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+        }
+
+        .btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .gradient-preview.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            max-height: none;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .preview-overlay:hover {
+            opacity: 1;
+        }
+
+        .preview-info {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }color: #fff;
                 cursor: pointer;
                 font-size: 12px;
                 transition: all 0.2s;
@@ -2094,118 +2164,6 @@
             showToast('Gradient Studio Pro へようこそ！');
         }
 
-        // Mobile controls functionality
-        function openMobileControls() {
-            const mobileControls = document.getElementById('mobileControls');
-            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
-            
-            mobileControls.classList.add('open');
-            mobileToggleBtn.style.display = 'none';
-            
-            // Sync mobile controls with main controls
-            syncMobileControls();
-        }
-
-        function closeMobileControls() {
-            const mobileControls = document.getElementById('mobileControls');
-            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
-            
-            mobileControls.classList.remove('open');
-            mobileToggleBtn.style.display = 'block';
-        }
-
-        function syncMobileControls() {
-            // Sync color stops
-            const mobileColorStops = document.getElementById('mobileColorStops');
-            if (mobileColorStops) {
-                mobileColorStops.innerHTML = colorStopsContainer.innerHTML;
-            }
-            
-            // Sync AI suggestions
-            const mobileSuggestions = document.getElementById('mobileSuggestions');
-            const aiSuggestions = document.getElementById('aiSuggestions');
-            if (mobileSuggestions && aiSuggestions) {
-                mobileSuggestions.innerHTML = aiSuggestions.innerHTML;
-            }
-            
-            // Sync CSS output
-            const mobileCssOutput = document.getElementById('mobileCssOutput');
-            if (mobileCssOutput) {
-                mobileCssOutput.textContent = cssOutput.textContent;
-            }
-            
-            // Sync sliders
-            document.getElementById('mobileAngleSlider').value = currentDirection.replace('deg', '');
-            document.getElementById('mobileAngleValue').textContent = currentDirection;
-            document.getElementById('mobileOpacity').value = globalOpacity;
-            document.getElementById('mobileOpacityValue').textContent = globalOpacity + '%';
-            document.getElementById('mobileBlendMode').value = currentBlendMode;
-        }
-
-        function setupMobileEventListeners() {
-            // Mobile tab switching
-            document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    // Update tab buttons
-                    document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    
-                    // Update tab content
-                    const tabName = e.target.dataset.tab;
-                    document.querySelectorAll('.mobile-tab-content').forEach(content => {
-                        content.classList.remove('active');
-                    });
-                    document.getElementById(`mobileTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
-                });
-            });
-            
-            // Mobile angle slider
-            const mobileAngleSlider = document.getElementById('mobileAngleSlider');
-            if (mobileAngleSlider) {
-                mobileAngleSlider.addEventListener('input', (e) => {
-                    currentDirection = e.target.value + 'deg';
-                    document.getElementById('mobileAngleValue').textContent = currentDirection;
-                    document.getElementById('angleSlider').value = e.target.value;
-                    document.getElementById('angleValue').textContent = currentDirection;
-                    updateGradient();
-                });
-            }
-            
-            // Mobile opacity slider
-            const mobileOpacity = document.getElementById('mobileOpacity');
-            if (mobileOpacity) {
-                mobileOpacity.addEventListener('input', (e) => {
-                    globalOpacity = e.target.value;
-                    document.getElementById('mobileOpacityValue').textContent = e.target.value + '%';
-                    document.getElementById('globalOpacity').value = e.target.value;
-                    document.getElementById('opacityValue').textContent = e.target.value + '%';
-                    updateGradient();
-                });
-            }
-            
-            // Mobile blend mode
-            const mobileBlendMode = document.getElementById('mobileBlendMode');
-            if (mobileBlendMode) {
-                mobileBlendMode.addEventListener('change', (e) => {
-                    currentBlendMode = e.target.value;
-                    document.getElementById('blendMode').value = e.target.value;
-                    updateGradient();
-                });
-            }
-            
-            // Close mobile controls when clicking outside
-            document.addEventListener('click', (e) => {
-                const mobileControls = document.getElementById('mobileControls');
-                const mobileToggleBtn = document.getElementById('mobileToggleBtn');
-                
-                if (mobileControls.classList.contains('open') && 
-                    !mobileControls.contains(e.target) && 
-                    !mobileToggleBtn.contains(e.target)) {
-                    closeMobileControls();
-                }
-            });
-        }
-
         // Enhanced initialization for mobile
         function init() {
             gradientPreview = document.getElementById('gradientPreview');
@@ -2215,7 +2173,6 @@
             historyGrid = document.getElementById('historyGrid');
 
             setupEventListeners();
-            setupMobileEventListeners();
             setupKeyboardShortcuts();
             setupAutoSave();
             
@@ -2230,30 +2187,15 @@
             setTimeout(loadAutoSave, 100);
             
             showToast('グラフラ へようこそ！');
-        }
-
-        // Override renderColorStops to also update mobile
-        const originalRenderColorStops = renderColorStops;
-        renderColorStops = function() {
-            originalRenderColorStops();
             
-            // Update mobile controls if they exist
+            // Show mobile controls if needed
             if (window.innerWidth <= 968) {
-                setTimeout(syncMobileControls, 100);
+                const mobileControls = document.querySelector('.mobile-quick-controls');
+                if (mobileControls) {
+                    mobileControls.style.display = 'block';
+                }
             }
-        };
-
-        // Override updateGradient to also update mobile
-        const originalUpdateGradient = updateGradient;
-        updateGradient = function() {
-            originalUpdateGradient();
-            
-            // Update mobile CSS output
-            const mobileCssOutput = document.getElementById('mobileCssOutput');
-            if (mobileCssOutput) {
-                mobileCssOutput.textContent = cssOutput.textContent;
-            }
-        };
+        }
 
         // Start when DOM is ready
         if (document.readyState === 'loading') {
@@ -2264,4 +2206,3 @@
     </script>
 </body>
 </html>
-
