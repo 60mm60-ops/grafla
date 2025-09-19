@@ -2,17 +2,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 :root {
-    --bg-color: #f0f2f5;
-    --panel-bg: #ffffff;
-    --sidebar-bg: #e9ecef;
-    --border-color: #e0e0e0;
-    --primary-color: #6c5ce7;
-    --secondary-color: #a29bfe;
-    --text-color: #333333;
-    --light-text-color: #666666;
-    --hover-color: #f5f5f5;
-    --danger-color: #e74c3c;
-    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --bg-color: #121212;
+    --panel-bg: #1e1e1e;
+    --sidebar-bg: #2d2d2d;
+    --border-color: #333333;
+    --primary-color: #a29bfe;
+    --secondary-color: #8c83ff;
+    --text-color: #e0e0e0;
+    --light-text-color: #b0b0b0;
+    --hover-color: #2a2a2a;
+    --danger-color: #ff6b6b;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -77,23 +77,24 @@ body {
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
-    color: var(--text-color);
+    color: var(--light-text-color);
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .nav-btn:hover {
     background-color: var(--sidebar-bg);
+    color: var(--text-color);
 }
 
 .nav-btn.active {
     background-color: var(--primary-color);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: var(--panel-bg);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .nav-btn.active .fas {
-    color: #fff;
+    color: var(--panel-bg);
 }
 
 /* Main Content */
@@ -118,7 +119,7 @@ body {
     min-width: 400px;
     min-height: 400px;
     border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     transition: opacity 0.3s ease;
     overflow: hidden;
     position: relative;
@@ -204,7 +205,7 @@ body {
     width: 18px;
     height: 18px;
     background: var(--primary-color);
-    border: 2px solid #fff;
+    border: 2px solid var(--panel-bg);
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -263,6 +264,8 @@ body {
     border-radius: 4px;
     font-family: monospace;
     font-size: 1rem;
+    background-color: var(--panel-bg);
+    color: var(--text-color);
 }
 
 .position-opacity-grid {
@@ -296,7 +299,7 @@ body {
 
 .type-btn.active {
     background-color: var(--primary-color);
-    color: #fff;
+    color: var(--panel-bg);
     border-color: var(--primary-color);
 }
 
@@ -304,7 +307,7 @@ body {
     width: 100%;
     padding: 15px;
     background-color: var(--primary-color);
-    color: #fff;
+    color: var(--panel-bg);
     border: none;
     border-radius: 8px;
     font-size: 1rem;
@@ -318,7 +321,7 @@ body {
 }
 
 .action-btn:hover {
-    background-color: #5c4fd7;
+    background-color: var(--secondary-color);
 }
 
 .mini-btn {
@@ -338,6 +341,7 @@ body {
 
 .mini-btn:hover {
     background-color: var(--sidebar-bg);
+    color: var(--text-color);
 }
 
 .mini-btn.danger {
@@ -347,7 +351,7 @@ body {
 
 .mini-btn.danger:hover {
     background-color: var(--danger-color);
-    color: #fff;
+    color: var(--panel-bg);
 }
 
 /* Direction Control */
@@ -365,7 +369,7 @@ body {
     width: 18px;
     height: 18px;
     background: var(--primary-color);
-    border: 2px solid #fff;
+    border: 2px solid var(--panel-bg);
     border-radius: 50%;
     position: absolute;
     top: 50%;
@@ -438,6 +442,7 @@ body {
     background-color: var(--sidebar-bg);
     resize: vertical;
     margin-top: 15px;
+    color: var(--text-color);
 }
 
 /* Toast Notification */
@@ -447,7 +452,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     background-color: var(--text-color);
-    color: #fff;
+    color: var(--panel-bg);
     padding: 12px 20px;
     border-radius: 8px;
     opacity: 0;
