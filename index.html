@@ -589,29 +589,202 @@
 
         @media (max-width: 1200px) {
             .app-container {
-                grid-template-columns: 300px 1fr 280px;
+                grid-template-columns: 280px 1fr 260px;
             }
         }
 
         @media (max-width: 968px) {
             .app-container {
                 grid-template-columns: 1fr;
-                grid-template-rows: 60px auto auto 1fr;
+                grid-template-rows: 60px 1fr;
+                height: 100vh;
             }
             
-            .sidebar-left {
-                order: 2;
-                max-height: 300px;
+            .sidebar-left, .sidebar-right {
+                display: none;
             }
             
             .main-canvas {
-                order: 3;
-                min-height: 300px;
+                display: flex;
+                flex-direction: column;
+                padding: 0;
             }
             
-            .sidebar-right {
-                order: 4;
-                max-height: 400px;
+            .canvas-toolbar {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .canvas-controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .gradient-preview {
+                flex: 1;
+                margin: 10px;
+                min-height: 200px;
+                position: relative;
+            }
+            
+            /* モバイル用コントロールパネル */
+            .mobile-controls {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #1a1a1a;
+                border-top: 1px solid #333;
+                max-height: 50vh;
+                overflow-y: auto;
+                z-index: 1000;
+                transform: translateY(100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .mobile-controls.open {
+                transform: translateY(0);
+            }
+            
+            .mobile-controls-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px 20px;
+                border-bottom: 1px solid #333;
+                background: #222;
+            }
+            
+            .mobile-tab-buttons {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .mobile-tab-btn {
+                background: #333;
+                border: 1px solid #555;
+                border-radius: 6px;
+                padding: 8px 12px;
+                color: #fff;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s;
+            }
+            
+            .mobile-tab-btn.active {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                border-color: #667eea;
+            }
+            
+            .mobile-close-btn {
+                background: #ff4757;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 12px;
+                color: white;
+                cursor: pointer;
+                font-size: 12px;
+            }
+            
+            .mobile-controls-content {
+                padding: 20px;
+            }
+            
+            .mobile-tab-content {
+                display: none;
+            }
+            
+            .mobile-tab-content.active {
+                display: block;
+            }
+            
+            /* モバイル用トグルボタン */
+            .mobile-toggle-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 1001;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s;
+            }
+            
+            .mobile-toggle-btn:hover {
+                transform: scale(1.1);
+            }
+            
+            /* カラーストップをモバイル最適化 */
+            .color-stops-section {
+                max-height: none;
+            }
+            
+            .color-stop {
+                margin-bottom: 15px;
+                padding: 12px;
+            }
+            
+            .position-opacity-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            /* エクスポートボタンをモバイル用に調整 */
+            .export-options {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .export-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                font-size: 1.2rem;
+            }
+            
+            .header-controls {
+                display: none;
+            }
+            
+            .canvas-toolbar {
+                padding: 8px 10px;
+            }
+            
+            .gradient-preview {
+                margin: 8px;
+                min-height: 180px;
+                border-radius: 10px;
+            }
+            
+            .mobile-controls-content {
+                padding: 15px;
+            }
+            
+            .color-stop {
+                padding: 10px;
+            }
+            
+            .mobile-toggle-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                bottom: 15px;
+                right: 15px;
             }
         }
 
@@ -1920,6 +2093,167 @@
             
             showToast('Gradient Studio Pro へようこそ！');
         }
+
+        // Mobile controls functionality
+        function openMobileControls() {
+            const mobileControls = document.getElementById('mobileControls');
+            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+            
+            mobileControls.classList.add('open');
+            mobileToggleBtn.style.display = 'none';
+            
+            // Sync mobile controls with main controls
+            syncMobileControls();
+        }
+
+        function closeMobileControls() {
+            const mobileControls = document.getElementById('mobileControls');
+            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+            
+            mobileControls.classList.remove('open');
+            mobileToggleBtn.style.display = 'block';
+        }
+
+        function syncMobileControls() {
+            // Sync color stops
+            const mobileColorStops = document.getElementById('mobileColorStops');
+            if (mobileColorStops) {
+                mobileColorStops.innerHTML = colorStopsContainer.innerHTML;
+            }
+            
+            // Sync AI suggestions
+            const mobileSuggestions = document.getElementById('mobileSuggestions');
+            const aiSuggestions = document.getElementById('aiSuggestions');
+            if (mobileSuggestions && aiSuggestions) {
+                mobileSuggestions.innerHTML = aiSuggestions.innerHTML;
+            }
+            
+            // Sync CSS output
+            const mobileCssOutput = document.getElementById('mobileCssOutput');
+            if (mobileCssOutput) {
+                mobileCssOutput.textContent = cssOutput.textContent;
+            }
+            
+            // Sync sliders
+            document.getElementById('mobileAngleSlider').value = currentDirection.replace('deg', '');
+            document.getElementById('mobileAngleValue').textContent = currentDirection;
+            document.getElementById('mobileOpacity').value = globalOpacity;
+            document.getElementById('mobileOpacityValue').textContent = globalOpacity + '%';
+            document.getElementById('mobileBlendMode').value = currentBlendMode;
+        }
+
+        function setupMobileEventListeners() {
+            // Mobile tab switching
+            document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Update tab buttons
+                    document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Update tab content
+                    const tabName = e.target.dataset.tab;
+                    document.querySelectorAll('.mobile-tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(`mobileTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+                });
+            });
+            
+            // Mobile angle slider
+            const mobileAngleSlider = document.getElementById('mobileAngleSlider');
+            if (mobileAngleSlider) {
+                mobileAngleSlider.addEventListener('input', (e) => {
+                    currentDirection = e.target.value + 'deg';
+                    document.getElementById('mobileAngleValue').textContent = currentDirection;
+                    document.getElementById('angleSlider').value = e.target.value;
+                    document.getElementById('angleValue').textContent = currentDirection;
+                    updateGradient();
+                });
+            }
+            
+            // Mobile opacity slider
+            const mobileOpacity = document.getElementById('mobileOpacity');
+            if (mobileOpacity) {
+                mobileOpacity.addEventListener('input', (e) => {
+                    globalOpacity = e.target.value;
+                    document.getElementById('mobileOpacityValue').textContent = e.target.value + '%';
+                    document.getElementById('globalOpacity').value = e.target.value;
+                    document.getElementById('opacityValue').textContent = e.target.value + '%';
+                    updateGradient();
+                });
+            }
+            
+            // Mobile blend mode
+            const mobileBlendMode = document.getElementById('mobileBlendMode');
+            if (mobileBlendMode) {
+                mobileBlendMode.addEventListener('change', (e) => {
+                    currentBlendMode = e.target.value;
+                    document.getElementById('blendMode').value = e.target.value;
+                    updateGradient();
+                });
+            }
+            
+            // Close mobile controls when clicking outside
+            document.addEventListener('click', (e) => {
+                const mobileControls = document.getElementById('mobileControls');
+                const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+                
+                if (mobileControls.classList.contains('open') && 
+                    !mobileControls.contains(e.target) && 
+                    !mobileToggleBtn.contains(e.target)) {
+                    closeMobileControls();
+                }
+            });
+        }
+
+        // Enhanced initialization for mobile
+        function init() {
+            gradientPreview = document.getElementById('gradientPreview');
+            cssOutput = document.getElementById('cssOutput');
+            toast = document.getElementById('toast');
+            colorStopsContainer = document.getElementById('colorStopsContainer');
+            historyGrid = document.getElementById('historyGrid');
+
+            setupEventListeners();
+            setupMobileEventListeners();
+            setupKeyboardShortcuts();
+            setupAutoSave();
+            
+            renderColorStops();
+            updateGradient();
+            renderHistory();
+            generateAISuggestions();
+            renderPresets();
+            generateHarmonyColors();
+            
+            // Load auto-save after everything is set up
+            setTimeout(loadAutoSave, 100);
+            
+            showToast('グラフラ へようこそ！');
+        }
+
+        // Override renderColorStops to also update mobile
+        const originalRenderColorStops = renderColorStops;
+        renderColorStops = function() {
+            originalRenderColorStops();
+            
+            // Update mobile controls if they exist
+            if (window.innerWidth <= 968) {
+                setTimeout(syncMobileControls, 100);
+            }
+        };
+
+        // Override updateGradient to also update mobile
+        const originalUpdateGradient = updateGradient;
+        updateGradient = function() {
+            originalUpdateGradient();
+            
+            // Update mobile CSS output
+            const mobileCssOutput = document.getElementById('mobileCssOutput');
+            if (mobileCssOutput) {
+                mobileCssOutput.textContent = cssOutput.textContent;
+            }
+        };
 
         // Start when DOM is ready
         if (document.readyState === 'loading') {
