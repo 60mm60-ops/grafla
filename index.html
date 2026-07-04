@@ -1,197 +1,569 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grafla - グラデーションジェネレーター</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+    <style>
+        :root {
+            --bg-canvas:  #eaeaec;
+            --bg-surface: #ffffff;
+            --bg-hover:   #e2e2e6;
+            --border-color: #d8d8dc;
+            --text-primary: #1c1c1f;
+            --text-muted:   #71717a;
+            --accent-color: #4ecdc4;
+            --accent-hover: #3db8b0;
+            --on-accent:    #0a0a0a;
+            --color-rejected: #e74c3c;
+            --color-success:  #10b981;
+            --radius: 8px;
+            --radius-sm: 6px;
+            --t: 0.18s ease;
+        }
+        [data-theme="dark"] {
+            --bg-canvas:  #121212;
+            --bg-surface: #1c1c1f;
+            --bg-hover:   #262629;
+            --border-color: #333333;
+            --text-primary: #e0e0e0;
+            --text-muted:   #888888;
+            --accent-color: #4ecdc4;
+            --accent-hover: #67e8df;
+            --on-accent:    #0a0a0a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-canvas);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color var(--t), color var(--t);
+        }
+
+        :focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+        .icon { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex-shrink: 0; }
+
+        .main-container { display: flex; min-height: 100vh; }
+
+        /* モバイルメニュー */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 1001;
+            background: var(--accent-color);
+            color: var(--on-accent);
+            border: none;
+            border-radius: var(--radius);
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .mobile-menu-toggle:active { transform: scale(0.94); }
+
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999; opacity: 0; visibility: hidden;
+            transition: opacity var(--t), visibility var(--t);
+        }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+        /* サイドバー */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-surface);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+            transition: background-color var(--t), border-color var(--t);
+        }
+
+        .logo-area {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 24px; padding: 4px 2px;
+            color: var(--accent-color);
+            font-size: 1.4rem; font-weight: 700;
+        }
+        .logo-area .icon { width: 1.3rem; height: 1.3rem; }
+
+        .main-nav { display: flex; flex-direction: column; gap: 4px; }
+
+        .nav-btn {
+            display: flex; align-items: center; gap: 12px;
+            width: 100%; padding: 12px 14px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: 0.9rem; font-weight: 500; font-family: inherit;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: background-color var(--t), color var(--t), border-color var(--t);
+        }
+        .nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-btn.active { background: var(--accent-color); color: var(--on-accent); }
+        .nav-btn .icon { width: 1.05rem; height: 1.05rem; }
+
+        .theme-toggle {
+            margin-top: auto;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 10px; border-radius: var(--radius);
+            font-size: 0.8rem; font-weight: 500; font-family: inherit;
+            cursor: pointer;
+            transition: background-color var(--t), color var(--t), border-color var(--t), transform 0.1s;
+        }
+        .theme-toggle:hover { color: var(--text-primary); border-color: var(--accent-color); }
+        .theme-toggle:active { transform: scale(0.97); }
+
+        /* メイン */
+        .content-area {
+            flex-grow: 1; display: flex; padding: 20px; gap: 20px;
+            min-width: 0;
+        }
+
+        .preview-panel {
+            flex: 0 0 420px;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+
+        .gradient-preview {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            max-width: 420px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* ハンドル */
+        .handle-layer { position: absolute; inset: 0; pointer-events: none; }
+        .handle-layer.hidden { display: none; }
+
+        .grad-handle {
+            position: absolute;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.35);
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            pointer-events: auto;
+            touch-action: none;
+            transition: box-shadow 0.15s;
+        }
+        .grad-handle:hover { box-shadow: 0 0 0 1px rgba(0,0,0,0.45), 0 0 0 4px rgba(78,205,196,0.35); }
+        .grad-handle:active { cursor: grabbing; }
+        .grad-handle.selected { border-color: var(--accent-color); box-shadow: 0 0 0 1px var(--accent-color), 0 0 0 4px rgba(78,205,196,0.4); }
+
+        /* コントロール */
+        .controls-panel {
+            flex: 1; min-width: 320px; max-width: 440px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+            transition: background-color var(--t), border-color var(--t);
+        }
+
+        .control-panel { display: none; }
+        .control-panel.active { display: block; }
+
+        .panel-section { margin-bottom: 22px; }
+
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 10px;
+        }
+        .panel-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+
+        .hint-text { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+
+        .control-group { margin-bottom: 18px; }
+        .control-label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 10px; color: var(--text-muted); }
+
+        /* ボタン */
+        .btn {
+            border: none; border-radius: var(--radius);
+            font-family: inherit; font-weight: 600; cursor: pointer;
+            transition: background-color var(--t), color var(--t), border-color var(--t), transform 0.1s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .action-btn {
+            width: 100%; padding: 13px;
+            background: var(--accent-color); color: var(--on-accent);
+            font-size: 0.9rem;
+        }
+        .action-btn:hover { background: var(--accent-hover); }
+
+        .mini-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem; font-weight: 500; font-family: inherit;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: background-color var(--t), color var(--t), border-color var(--t), transform 0.1s;
+        }
+        .mini-btn:hover { color: var(--text-primary); border-color: var(--accent-color); }
+        .mini-btn:active { transform: scale(0.97); }
+        .mini-btn.danger { color: var(--color-rejected); border-color: var(--color-rejected); }
+        .mini-btn.danger:hover { background: var(--color-rejected); color: #fff; }
+
+        /* モードセグメント */
+        .segment {
+            display: flex; gap: 4px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 4px;
+        }
+        .segment button {
+            flex: 1; padding: 10px 8px;
+            background: none; border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem; font-weight: 500; font-family: inherit;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background-color var(--t), color var(--t);
+        }
+        .segment button:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
+        .segment button.active { background: var(--accent-color); color: var(--on-accent); }
+
+        /* 点リスト */
+        .point-row {
+            display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+            background: var(--bg-canvas);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 8px;
+        }
+        .point-main { display: flex; align-items: center; gap: 10px; }
+        .point-radius { display: flex; align-items: center; gap: 10px; padding-top: 8px; margin-top: 2px; border-top: 1px dashed var(--border-color); }
+        .point-radius .pr-label { font-weight: 600; color: var(--accent-color); }
+        .pr-label { font-size: 0.72rem; color: var(--text-muted); min-width: 28px; flex-shrink: 0; }
+        .pr-val { font-size: 0.72rem; color: var(--text-muted); min-width: 36px; text-align: right; flex-shrink: 0; }
+        .point-radius .slider { flex: 1; }
+        .point-index {
+            width: 22px; height: 22px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+        }
+        .point-row input[type="color"] {
+            width: 36px; height: 36px; flex-shrink: 0;
+            padding: 0; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); cursor: pointer; background: none;
+        }
+        .point-row .hex-input {
+            flex: 1; min-width: 0;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-family: monospace; font-size: 0.85rem;
+            background: var(--bg-surface); color: var(--text-primary);
+            transition: border-color var(--t);
+        }
+        .point-row .hex-input:focus { outline: none; border-color: var(--accent-color); }
+        .point-del {
+            flex-shrink: 0; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: none; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted); cursor: pointer;
+            transition: background-color var(--t), color var(--t), border-color var(--t);
+        }
+        .point-del:hover { color: #fff; background: var(--color-rejected); border-color: var(--color-rejected); }
+        .point-del:disabled { opacity: 0.35; cursor: not-allowed; }
+        .point-del:disabled:hover { background: none; color: var(--text-muted); border-color: var(--border-color); }
+
+        /* スライダー */
+        .slider-group { display: flex; align-items: center; gap: 12px; }
+        .slider {
+            flex-grow: 1; -webkit-appearance: none; appearance: none;
+            height: 4px; background: var(--border-color);
+            border-radius: 2px; outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--accent-color); cursor: pointer;
+        }
+        .slider::-moz-range-thumb { width: 16px; height: 16px; border: none; border-radius: 50%; background: var(--accent-color); cursor: pointer; }
+        .slider-value { font-size: 0.82rem; min-width: 44px; text-align: right; color: var(--text-primary); font-weight: 500; }
+
+        /* トグルスイッチ */
+        .switch-row { display: flex; align-items: center; justify-content: space-between; }
+        .switch-row label { font-size: 0.85rem; color: var(--text-primary); }
+        .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-track {
+            position: absolute; inset: 0; cursor: pointer;
+            background: var(--border-color); border-radius: 99px;
+            transition: background-color var(--t);
+        }
+        .switch-track::before {
+            content: ''; position: absolute;
+            width: 18px; height: 18px; left: 3px; top: 3px;
+            background: #fff; border-radius: 50%;
+            transition: transform var(--t);
+        }
+        .switch input:checked + .switch-track { background: var(--accent-color); }
+        .switch input:checked + .switch-track::before { transform: translateX(20px); }
+
+        .checkbox-group { display: flex; gap: 16px; flex-wrap: wrap; }
+        .checkbox-group label { font-size: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .checkbox-group input { width: 16px; height: 16px; accent-color: var(--accent-color); }
+
+        /* プリセット・履歴 */
+        .preset-grid, .history-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .preset-item, .history-item {
+            height: 68px; border-radius: var(--radius-sm);
+            cursor: pointer; border: 1px solid var(--border-color);
+            transition: transform 0.15s, border-color var(--t);
+            position: relative; overflow: hidden;
+        }
+        .preset-item:hover, .history-item:hover { transform: translateY(-3px); border-color: var(--accent-color); }
+        .history-item-controls { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; opacity: 0; transition: opacity var(--t); }
+        .history-item:hover .history-item-controls { opacity: 1; }
+        .history-control-btn {
+            width: 22px; height: 22px; border: none; border-radius: 4px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; background: rgba(0,0,0,0.6); color: #fff;
+        }
+        .history-control-btn.favorite.active { background: var(--color-success); }
+        .history-control-btn.delete:hover { background: var(--color-rejected); }
+        .history-timestamp {
+            position: absolute; bottom: 3px; left: 5px;
+            font-size: 0.65rem; color: #fff;
+            background: rgba(0,0,0,0.6); padding: 1px 5px; border-radius: 3px;
+        }
+
+        .save-controls { display: flex; gap: 8px; margin-bottom: 16px; }
+        .save-name-input {
+            flex: 1; padding: 10px 12px;
+            border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            background: var(--bg-canvas); color: var(--text-primary);
+            font-size: 0.85rem; font-family: inherit;
+        }
+        .save-name-input:focus { outline: none; border-color: var(--accent-color); }
+
+        /* 画像抽出 */
+        .extracted-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+        .ext-chip {
+            flex: 1; min-width: 56px; height: 56px;
+            border-radius: var(--radius-sm); border: 1px solid var(--border-color);
+            cursor: pointer; display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 4px; transition: transform 0.15s;
+        }
+        .ext-chip:hover { transform: translateY(-2px); }
+        .ext-chip span { font-family: monospace; font-size: 0.58rem; background: rgba(0,0,0,0.55); color: #fff; padding: 1px 4px; border-radius: 3px; }
+        .extracted-actions { display: flex; gap: 8px; }
+        .extracted-actions .mini-btn { flex: 1; justify-content: center; }
+
+        .image-export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .css-output {
+            width: 100%; height: 120px; margin-top: 14px;
+            padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            font-family: monospace; font-size: 0.8rem;
+            background: var(--bg-canvas); color: var(--text-primary);
+            resize: vertical;
+        }
+        .css-output:focus { outline: none; border-color: var(--accent-color); }
+
+        .gradient-animation { background-size: 300% 300% !important; animation: gradient-anim 12s ease infinite; }
+        @keyframes gradient-anim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* トースト */
+        .toast {
+            position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%);
+            background: var(--accent-color); color: var(--on-accent);
+            padding: 12px 22px; border-radius: var(--radius);
+            font-size: 0.85rem; font-weight: 600; z-index: 2000;
+            transition: bottom 0.3s ease-out; white-space: nowrap; max-width: 90vw;
+        }
+        .toast.show { bottom: 24px; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-canvas); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        @media (max-width: 1100px) {
+            .mobile-menu-toggle { display: block; }
+            .sidebar {
+                position: fixed; top: 0; left: -100%;
+                width: 280px; height: 100vh; z-index: 1000;
+                transition: left var(--t); overflow-y: auto;
+            }
+            .sidebar.active { left: 0; }
+            .content-area { flex-direction: column; padding: 64px 16px 16px; }
+            .preview-panel { flex: none; width: 100%; }
+            .gradient-preview { max-width: 100%; height: 300px; }
+            .controls-panel { width: 100%; max-width: none; min-width: 0; }
+        }
+        @media (max-width: 520px) {
+            .gradient-preview { height: 260px; }
+            .preset-grid, .history-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
 </head>
 <body>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-        <i class="fas fa-bars"></i>
-    </button>
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="メニュー"></button>
 
     <div class="main-container">
         <aside class="sidebar" id="sidebar">
             <div class="logo-area">
-                <i class="fas fa-palette"></i>
-                <h1>Grafla</h1>
+                <span id="logoIcon"></span> Grafla
             </div>
             <nav class="main-nav">
-                <button class="nav-btn active" data-target="panel-colors">
-                    <i class="fas fa-swatchbook"></i>
-                    <span>カラー</span>
-                </button>
-                <button class="nav-btn" data-target="panel-settings">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>設定</span>
-                </button>
-                <button class="nav-btn" data-target="panel-presets">
-                    <i class="fas fa-history"></i>
-                    <span>履歴・プリセット</span>
-                </button>
-                <button class="nav-btn" data-target="panel-export">
-                    <i class="fas fa-file-export"></i>
-                    <span>書き出し</span>
-                </button>
+                <button class="nav-btn active" data-target="panel-design"><span class="nav-ic" data-ic="droplet"></span><span>デザイン</span></button>
+                <button class="nav-btn" data-target="panel-align"><span class="nav-ic" data-ic="move"></span><span>調整</span></button>
+                <button class="nav-btn" data-target="panel-image"><span class="nav-ic" data-ic="image"></span><span>画像から抽出</span></button>
+                <button class="nav-btn" data-target="panel-history"><span class="nav-ic" data-ic="history"></span><span>履歴・プリセット</span></button>
+                <button class="nav-btn" data-target="panel-export"><span class="nav-ic" data-ic="download"></span><span>書き出し</span></button>
             </nav>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="themeIcon"></span><span id="themeLabel">ライト</span>
+            </button>
         </aside>
 
         <main class="content-area">
             <div class="preview-panel">
-                <div id="gradientPreview" class="gradient-preview"></div>
+                <div id="gradientPreview" class="gradient-preview">
+                    <div id="handleLayer" class="handle-layer"></div>
+                </div>
             </div>
-            
+
             <div class="controls-panel">
-                <div id="panel-colors" class="control-panel active">
+                <!-- デザイン -->
+                <div id="panel-design" class="control-panel active">
                     <div class="panel-section">
                         <div class="panel-header">
-                            <h3 class="panel-title"><i class="fas fa-fill-drip"></i> カラーコントローラー</h3>
-                            <button class="mini-btn" onclick="addColorStop()">
-                                <i class="fas fa-plus"></i>
-                                ストップ追加
-                            </button>
+                            <h3 class="panel-title">カラーポイント</h3>
+                            <button class="mini-btn" onclick="addPointCentered()"><span class="nav-ic" data-ic="plus"></span>点を追加</button>
                         </div>
-                        <div id="colorStopsContainer"></div>
+                        <p class="hint-text">プレビューをタップで点を追加、ハンドルをドラッグで移動。色は下で編集できます。</p>
+                        <label class="control-label">モード（点の並べ方）</label>
+                        <div class="segment" id="modeSegment">
+                            <button data-mode="linear" class="active"><span class="nav-ic" data-ic="line"></span>まっすぐ</button>
+                            <button data-mode="radial"><span class="nav-ic" data-ic="target"></span>放射状</button>
+                            <button data-mode="mesh"><span class="nav-ic" data-ic="layers"></span>メッシュ</button>
+                        </div>
+                        <button class="mini-btn" style="margin:10px 0 18px;width:100%;justify-content:center" onclick="alignPoints()"><span class="nav-ic" data-ic="move"></span>いまのモードに整列する</button>
+                        <div id="pointList"></div>
                     </div>
                 </div>
 
-                <div id="panel-settings" class="control-panel">
+                <!-- 整列・調整 -->
+                <div id="panel-align" class="control-panel">
                     <div class="panel-section">
-                        <div class="panel-header">
-                            <h3 class="panel-title"><i class="fas fa-cogs"></i> グラデーション設定</h3>
-                        </div>
+                        <div class="panel-header"><h3 class="panel-title">調整</h3></div>
                         <div class="control-group">
-                            <label class="control-label">グラデーションタイプ</label>
-                            <div class="button-group">
-                                <button class="type-btn gradient-type active" data-type="linear">
-                                    <i class="fas fa-arrows-alt-h"></i>
-                                    線形
-                                </button>
-                                <button class="type-btn gradient-type" data-type="radial">
-                                    <i class="fas fa-bullseye"></i>
-                                    放射状
-                                </button>
-                                <button class="type-btn gradient-type" data-type="conic">
-                                    <i class="fas fa-braille"></i>
-                                    円錐形
-                                </button>
+                            <div class="switch-row">
+                                <label for="handleToggle">ハンドルを表示</label>
+                                <span class="switch">
+                                    <input type="checkbox" id="handleToggle" checked>
+                                    <span class="switch-track"></span>
+                                </span>
                             </div>
                         </div>
-
-                        <div class="control-group" id="linearControls">
-                            <label class="control-label">角度・開始点</label>
-                            <div id="directionControl" class="direction-control">
-                                <div id="directionHandle" class="direction-handle"></div>
-                            </div>
+                        <div class="control-group" id="blobGroup">
+                            <label class="control-label">メッシュの滲み（全点まとめて）</label>
                             <div class="slider-group">
-                                <input type="range" id="angleSlider" class="slider" min="0" max="360" value="135">
-                                <span class="slider-value" id="angleValue">135°</span>
+                                <input type="range" id="blobSize" class="slider" min="25" max="90" value="60">
+                                <span class="slider-value" id="blobSizeValue">60%</span>
                             </div>
                         </div>
-
-                        <div id="radialControls" class="radial-controls hidden">
-                            <div class="control-group">
-                                <label class="control-label">形状</label>
-                                <select id="radialShapeSelect" class="select-field">
-                                    <option value="circle">円形</option>
-                                    <option value="ellipse">楕円形</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label">中心X</label>
-                                <div class="slider-group">
-                                    <input type="range" id="radialCenterX" class="slider" min="0" max="100" value="50">
-                                    <span class="slider-value" id="radialCenterXValue">50%</span>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label">中心Y</label>
-                                <div class="slider-group">
-                                    <input type="range" id="radialCenterY" class="slider" min="0" max="100" value="50">
-                                    <span class="slider-value" id="radialCenterYValue">50%</span>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="control-group">
-                            <label class="control-label">全体透明度</label>
+                            <label class="control-label">全体の透明度</label>
                             <div class="slider-group">
                                 <input type="range" id="globalOpacity" class="slider" min="0" max="100" value="100">
                                 <span class="slider-value" id="opacityValue">100%</span>
                             </div>
                         </div>
-
                         <div class="control-group">
                             <label class="control-label">エフェクト</label>
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="animateGradient"> アニメーション</label>
-                                <label><input type="checkbox" id="noiseOverlay"> ノイズ</label>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="panel-presets" class="control-panel">
-                    <div class="manual-save-section">
-                        <h4><i class="fas fa-save"></i> 手動保存</h4>
-                        <div class="save-controls">
-                            <input type="text" id="saveNameInput" class="save-name-input" placeholder="グラデーション名（任意）">
-                            <button class="mini-btn success" onclick="manualSaveGradient()">
-                                <i class="fas fa-save"></i>
-                                保存
-                            </button>
+                <!-- 画像から抽出 -->
+                <div id="panel-image" class="control-panel">
+                    <div class="panel-section">
+                        <div class="panel-header"><h3 class="panel-title">画像から抽出</h3></div>
+                        <p class="hint-text">画像から代表的な5色を抜き出し、色相順に並べます。そのまま点として使えます。</p>
+                        <button class="action-btn" onclick="document.getElementById('imageInput').click()"><span class="nav-ic" data-ic="image"></span> 画像を選ぶ</button>
+                        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageFile(this.files[0])">
+                        <div id="extractedChips" class="extracted-chips"></div>
+                        <div id="extractedActions" class="extracted-actions" style="display:none">
+                            <button class="mini-btn" onclick="applyExtracted('linear')">まっすぐに</button>
+                            <button class="mini-btn" onclick="applyExtracted('mesh')">メッシュに</button>
                         </div>
                     </div>
+                </div>
 
+                <!-- 履歴・プリセット -->
+                <div id="panel-history" class="control-panel">
                     <div class="panel-section">
-                        <div class="panel-header">
-                            <h3 class="panel-title"><i class="fas fa-bookmark"></i> プリセット</h3>
+                        <div class="panel-header"><h3 class="panel-title">保存</h3></div>
+                        <div class="save-controls">
+                            <input type="text" id="saveNameInput" class="save-name-input" placeholder="名前（任意）">
+                            <button class="mini-btn" onclick="manualSave()"><span class="nav-ic" data-ic="save"></span>保存</button>
                         </div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-header"><h3 class="panel-title">プリセット</h3></div>
                         <div id="presetsGrid" class="preset-grid"></div>
                     </div>
-
                     <div class="panel-section">
                         <div class="panel-header">
-                            <h3 class="panel-title"><i class="fas fa-history"></i> 履歴</h3>
-                            <div class="history-controls">
-                                <button class="mini-btn" onclick="sortHistoryByFavorites()">
-                                    <i class="fas fa-star"></i>
-                                    お気に入り順
-                                </button>
-                                <button class="mini-btn danger" onclick="clearHistory()">
-                                    <i class="fas fa-trash"></i>
-                                    全削除
-                                </button>
-                            </div>
+                            <h3 class="panel-title">履歴</h3>
+                            <button class="mini-btn danger" onclick="clearHistory()"><span class="nav-ic" data-ic="trash"></span>全削除</button>
                         </div>
                         <div id="historyGrid" class="history-grid"></div>
                     </div>
                 </div>
 
+                <!-- 書き出し -->
                 <div id="panel-export" class="control-panel">
                     <div class="panel-section">
-                        <div class="panel-header">
-                            <h3 class="panel-title"><i class="fas fa-file-export"></i> 書き出し</h3>
-                        </div>
-                        <div class="export-buttons">
-                            <button class="action-btn" onclick="copyCSSCode()">
-                                <i class="fas fa-code"></i>
-                                CSSをコピー
-                            </button>
-                            <div class="image-export-grid">
-                                <button class="action-btn" onclick="exportAsImage('png')">
-                                    <i class="fas fa-image"></i>
-                                    PNG
-                                </button>
-                                <button class="action-btn" onclick="exportAsImage('jpeg')">
-                                    <i class="fas fa-image"></i>
-                                    JPEG
-                                </button>
-                            </div>
+                        <div class="panel-header"><h3 class="panel-title">書き出し</h3></div>
+                        <button class="action-btn" onclick="copyCSS()"><span class="nav-ic" data-ic="code"></span> CSSをコピー</button>
+                        <div class="image-export-grid">
+                            <button class="action-btn" onclick="exportImage('png')"><span class="nav-ic" data-ic="image"></span> PNG</button>
+                            <button class="action-btn" onclick="exportImage('jpeg')"><span class="nav-ic" data-ic="image"></span> JPEG</button>
                         </div>
                         <textarea id="cssOutput" class="css-output" readonly></textarea>
                     </div>
@@ -202,6 +574,688 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="script.js"></script>
+    <script>
+        // ============================================================
+        // SVGアイコン（CDN非依存）
+        // ============================================================
+        const S = (p) => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+        const IC = {
+            logo: S('<circle cx="13.5" cy="6.5" r=".9" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r=".9" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".9" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".9" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>'),
+            droplet: S('<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>'),
+            move: S('<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>'),
+            image: S('<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'),
+            history: S('<path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>'),
+            download: S('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
+            plus: S('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'),
+            trash: S('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'),
+            save: S('<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>'),
+            code: S('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
+            line: S('<line x1="4" y1="19" x2="20" y2="5"/>'),
+            target: S('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'),
+            layers: S('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'),
+            star: S('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'),
+            menu: S('<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>'),
+            x: S('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'),
+            sun: S('<circle cx="12" cy="12" r="4"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'),
+            moon: S('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>')
+        };
+
+        // ============================================================
+        // テーマ（pita-theme 共通キー）
+        // ============================================================
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('pita-theme', theme);
+            const ic = document.getElementById('themeIcon');
+            const lb = document.getElementById('themeLabel');
+            if (ic) ic.innerHTML = theme === 'dark' ? IC.moon : IC.sun;
+            if (lb) lb.textContent = theme === 'dark' ? 'ダーク' : 'ライト';
+        }
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            applyTheme(cur === 'dark' ? 'light' : 'dark');
+            if (typeof render === 'function' && mode === 'mesh') render();
+        }
+        (function () { applyTheme(localStorage.getItem('pita-theme') || 'light'); })();
+
+        // ============================================================
+        // 状態
+        // ============================================================
+        let points = [
+            { id: 1, x: 24, y: 30, color: '#FFD93D', r: 55 },
+            { id: 2, x: 76, y: 70, color: '#6BCB77', r: 55 }
+        ];
+        let nextId = 3;
+        let mode = 'linear';           // linear | radial | mesh
+        let showHandles = true;
+        let blobSize = 60;
+        let globalOpacity = 100;
+        let selectedId = null;
+        let extractedColors = [];
+        let history = JSON.parse(localStorage.getItem('grafla-history-v2') || '[]');
+
+        const presets = [
+            { name: '黄→緑', mode: 'linear', points: [{ x: 22, y: 28, color: '#FFD93D' }, { x: 78, y: 72, color: '#6BCB77' }] },
+            { name: 'サンセット', mode: 'linear', points: [{ x: 20, y: 20, color: '#FF6B6B' }, { x: 80, y: 80, color: '#FFD93D' }] },
+            { name: 'オーロラ', mode: 'linear', points: [{ x: 15, y: 50, color: '#4ecdc4' }, { x: 50, y: 30, color: '#a1f0e8' }, { x: 85, y: 60, color: '#45b7d1' }] },
+            { name: 'ミント', mode: 'linear', points: [{ x: 25, y: 75, color: '#00b09b' }, { x: 75, y: 25, color: '#96c93d' }] },
+            { name: 'グロー', mode: 'radial', points: [{ x: 50, y: 50, color: '#ffd93d' }, { x: 85, y: 85, color: '#ff6b6b' }] },
+            { name: 'メッシュ', mode: 'mesh', points: [{ x: 25, y: 30, color: '#4ecdc4' }, { x: 75, y: 35, color: '#ff6b6b' }, { x: 50, y: 75, color: '#ffd93d' }] }
+        ];
+
+        // DOM
+        let gradientPreview, handleLayer, cssOutput, toast, pointList, presetsGrid, historyGrid;
+        let sidebar, sidebarOverlay, mobileMenuToggle;
+
+        // ============================================================
+        // 色変換
+        // ============================================================
+        function hexToRgb(hex) {
+            const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 0, g: 0, b: 0 };
+        }
+        function rgbToHex(r, g, b) {
+            const h = x => Math.round(x).toString(16).padStart(2, '0');
+            return '#' + h(r) + h(g) + h(b);
+        }
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+            let h, s, l = (mx + mn) / 2;
+            if (mx === mn) { h = s = 0; }
+            else {
+                const d = mx - mn;
+                s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+                switch (mx) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: h * 360, s, l };
+        }
+        function hexToRgba(hex, a) {
+            const c = hexToRgb(hex);
+            return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
+        }
+
+        // ============================================================
+        // グラデCSS生成（点ベース・3モード）
+        // ============================================================
+        function meshBg() {
+            const v = getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim();
+            return v || '#ffffff';
+        }
+
+        function buildGradient() {
+            const rect = gradientPreview.getBoundingClientRect();
+            const W = rect.width || 420, H = rect.height || 380;
+
+            if (mode === 'mesh') {
+                if (!points.length) return { plain: meshBg(), out: `background: ${meshBg()};` };
+                const layers = points.map(p =>
+                    `radial-gradient(circle at ${p.x.toFixed(1)}% ${p.y.toFixed(1)}%, ${hexToRgba(p.color, 1)} 0%, ${hexToRgba(p.color, 0)} ${(p.r ?? blobSize)}%)`
+                );
+                return {
+                    bg: meshBg(),
+                    img: layers.join(', '),
+                    out: `background-color: ${meshBg()};\nbackground-image:\n  ${layers.join(',\n  ')};`
+                };
+            }
+
+            if (points.length < 2) {
+                const c = points[0] ? points[0].color : '#000000';
+                const css = `linear-gradient(90deg, ${c}, ${c})`;
+                return { css, out: `background: ${css};` };
+            }
+
+            if (mode === 'linear') {
+                const p0 = points[0], pn = points[points.length - 1];
+                const dx = (pn.x - p0.x) / 100 * W, dy = (pn.y - p0.y) / 100 * H;
+                const len2 = dx * dx + dy * dy || 1;
+                let ang = Math.atan2(dx, -dy) * 180 / Math.PI;
+                ang = (ang + 360) % 360;
+                const stops = points.map(p => {
+                    const vx = (p.x - p0.x) / 100 * W, vy = (p.y - p0.y) / 100 * H;
+                    let t = (vx * dx + vy * dy) / len2;
+                    t = Math.max(0, Math.min(1, t));
+                    return { pos: t * 100, color: p.color };
+                }).sort((a, b) => a.pos - b.pos);
+                const s = stops.map(o => `${o.color} ${o.pos.toFixed(1)}%`).join(', ');
+                const css = `linear-gradient(${ang.toFixed(1)}deg, ${s})`;
+                return { css, out: `background: ${css};` };
+            }
+
+            // radial
+            const c0 = points[0];
+            const dists = points.map(p => Math.hypot((p.x - c0.x) / 100 * W, (p.y - c0.y) / 100 * H));
+            const maxD = Math.max(...dists) || 1;
+            const stops = points.map((p, i) => ({ pos: dists[i] / maxD * 100, color: p.color }))
+                .sort((a, b) => a.pos - b.pos);
+            const s = stops.map(o => `${o.color} ${o.pos.toFixed(1)}%`).join(', ');
+            const css = `radial-gradient(circle at ${c0.x.toFixed(1)}% ${c0.y.toFixed(1)}%, ${s})`;
+            return { css, out: `background: ${css};` };
+        }
+
+        // ============================================================
+        // 描画
+        // ============================================================
+        function render() {
+            const g = buildGradient();
+            if (g.img !== undefined) {
+                gradientPreview.style.backgroundColor = g.bg;
+                gradientPreview.style.backgroundImage = g.img;
+            } else if (g.plain !== undefined) {
+                gradientPreview.style.backgroundImage = '';
+                gradientPreview.style.background = g.plain;
+            } else {
+                gradientPreview.style.backgroundImage = '';
+                gradientPreview.style.background = g.css;
+            }
+            gradientPreview.style.opacity = globalOpacity / 100;
+            cssOutput.textContent = g.out + (mode === 'mesh' ? '' : `\nopacity: ${globalOpacity / 100};`);
+            positionHandles();
+        }
+
+        // ハンドルDOM（点の追加・削除時に呼ぶ）
+        function renderHandles() {
+            handleLayer.innerHTML = '';
+            points.forEach(p => {
+                const h = document.createElement('div');
+                h.className = 'grad-handle' + (p.id === selectedId ? ' selected' : '');
+                h.dataset.id = p.id;
+                h.style.left = p.x + '%';
+                h.style.top = p.y + '%';
+                h.style.background = p.color;
+                handleLayer.appendChild(h);
+            });
+        }
+        // 位置だけ更新（描画・ドラッグ中）
+        function positionHandles() {
+            [...handleLayer.children].forEach(h => {
+                const p = points.find(pt => pt.id == h.dataset.id);
+                if (!p) return;
+                h.style.left = p.x + '%';
+                h.style.top = p.y + '%';
+                h.style.background = p.color;
+                h.classList.toggle('selected', p.id === selectedId);
+            });
+        }
+
+        // ============================================================
+        // 点リスト（デザインパネル）
+        // ============================================================
+        function renderPointList() {
+            pointList.innerHTML = '';
+            points.forEach((p, i) => {
+                const row = document.createElement('div');
+                row.className = 'point-row';
+                const rv = p.r ?? blobSize;
+                row.innerHTML = `
+                    <div class="point-main">
+                        <span class="point-index">${i + 1}</span>
+                        <input type="color" value="${p.color}" data-id="${p.id}" class="pt-color">
+                        <input type="text" value="${p.color}" data-id="${p.id}" class="hex-input pt-hex" maxlength="7">
+                        <button class="point-del" data-id="${p.id}" ${points.length <= 2 ? 'disabled' : ''} aria-label="削除">${IC.trash}</button>
+                    </div>
+                    <div class="point-radius" style="display:${mode === 'mesh' ? 'flex' : 'none'}">
+                        <span class="pr-label">範囲</span>
+                        <input type="range" class="slider pt-r" min="10" max="100" value="${rv}" data-id="${p.id}">
+                        <span class="pr-val">${rv}%</span>
+                    </div>
+                `;
+                pointList.appendChild(row);
+            });
+            pointList.querySelectorAll('.pt-color').forEach(el => el.addEventListener('input', e => {
+                const p = points.find(pt => pt.id == e.target.dataset.id);
+                p.color = e.target.value;
+                e.target.nextElementSibling.value = e.target.value;
+                render();
+            }));
+            pointList.querySelectorAll('.pt-hex').forEach(el => el.addEventListener('input', e => {
+                let v = e.target.value.trim();
+                if (!v.startsWith('#')) v = '#' + v;
+                if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+                    const p = points.find(pt => pt.id == e.target.dataset.id);
+                    p.color = v;
+                    e.target.previousElementSibling.value = v;
+                    render();
+                }
+            }));
+            pointList.querySelectorAll('.point-del').forEach(el => el.addEventListener('click', e => {
+                if (points.length <= 2) return;
+                removePoint(parseInt(e.currentTarget.dataset.id));
+            }));
+            pointList.querySelectorAll('.pt-r').forEach(el => el.addEventListener('input', e => {
+                const p = points.find(pt => pt.id == e.target.dataset.id);
+                p.r = parseInt(e.target.value);
+                e.target.nextElementSibling.textContent = p.r + '%';
+                render();
+            }));
+        }
+
+        // ============================================================
+        // 点の追加・削除
+        // ============================================================
+        function pickNewColor() {
+            const pal = ['#4ecdc4', '#ff6b6b', '#ffd93d', '#6c5ce7', '#45b7d1', '#f0932b', '#a29bfe', '#eb4d4b'];
+            return pal[points.length % pal.length];
+        }
+        function addPointAt(x, y) {
+            const p = { id: nextId++, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)), color: pickNewColor(), r: blobSize };
+            points.push(p);
+            selectedId = p.id;
+            renderHandles(); renderPointList(); render();
+            showToast(`${p.color.toUpperCase()} を追加`);
+        }
+        function addPointCentered() { addPointAt(50, 50); }
+        function removePoint(id) {
+            if (points.length <= 2) { showToast('最低2点は必要です'); return; }
+            points = points.filter(p => p.id !== id);
+            if (selectedId === id) selectedId = null;
+            renderHandles(); renderPointList(); render();
+        }
+
+        // ============================================================
+        // モード・整列
+        // ============================================================
+        function setMode(m) {
+            mode = m;
+            document.querySelectorAll('#modeSegment button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+            document.getElementById('blobGroup').style.display = (m === 'mesh') ? 'block' : 'none';
+            renderPointList();
+            render();
+        }
+        function alignPoints() {
+            const n = points.length;
+            if (mode === 'radial') {
+                points[0].x = 50; points[0].y = 50;
+                const rest = points.slice(1);
+                rest.forEach((p, i) => {
+                    const ang = (i / rest.length) * Math.PI * 2 - Math.PI / 2;
+                    p.x = 50 + Math.cos(ang) * 34;
+                    p.y = 50 + Math.sin(ang) * 34;
+                });
+            } else {
+                // まっすぐ／メッシュ：左上→右下の対角線上に等間隔
+                points.forEach((p, i) => {
+                    const t = n === 1 ? 0.5 : i / (n - 1);
+                    p.x = 15 + t * 70;
+                    p.y = 20 + t * 60;
+                });
+            }
+            renderHandles(); render();
+            showToast('点を整列しました');
+        }
+
+        // ============================================================
+        // ハンドルのドラッグ / プレビュークリックで追加
+        // ============================================================
+        let dragId = null, didDrag = false;
+        function pointerXY(e, rect) {
+            const cx = e.clientX ?? (e.touches && e.touches[0].clientX);
+            const cy = e.clientY ?? (e.touches && e.touches[0].clientY);
+            return {
+                x: Math.max(0, Math.min(100, (cx - rect.left) / rect.width * 100)),
+                y: Math.max(0, Math.min(100, (cy - rect.top) / rect.height * 100))
+            };
+        }
+        function onHandleDown(e) {
+            const h = e.target.closest('.grad-handle');
+            if (!h) return;
+            e.preventDefault(); e.stopPropagation();
+            dragId = parseInt(h.dataset.id);
+            didDrag = false;
+            selectedId = dragId;
+            positionHandles();
+        }
+        function onMove(e) {
+            if (dragId === null) return;
+            e.preventDefault();
+            didDrag = true;
+            const rect = gradientPreview.getBoundingClientRect();
+            const { x, y } = pointerXY(e, rect);
+            const p = points.find(pt => pt.id === dragId);
+            if (!p) return;
+            p.x = x; p.y = y;
+            render();
+        }
+        function onUp() {
+            if (dragId !== null) { renderPointList(); }
+            dragId = null;
+        }
+        function onPreviewClick(e) {
+            if (e.target.closest('.grad-handle')) return;
+            if (didDrag) { didDrag = false; return; }
+            const rect = gradientPreview.getBoundingClientRect();
+            const { x, y } = pointerXY(e, rect);
+            addPointAt(x, y);
+        }
+
+        // ============================================================
+        // 画像から色抽出
+        // ============================================================
+        function handleImageFile(file) {
+            if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                const w = 120, h = Math.max(1, Math.round(120 * img.height / img.width));
+                const cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                const ctx = cv.getContext('2d');
+                ctx.imageSmoothingEnabled = false;   // 補間による混色を防ぐ（鮮やかさ保持）
+                ctx.drawImage(img, 0, 0, w, h);
+                let data;
+                try { data = ctx.getImageData(0, 0, w, h).data; }
+                catch (err) { showToast('この画像は解析できませんでした'); return; }
+                extractedColors = extractPalette(data, 5);
+                renderChips();
+                showToast('画像から5色を抽出しました');
+            };
+            img.onerror = () => showToast('画像の読み込みに失敗しました');
+            const rd = new FileReader();
+            rd.onload = e => { img.src = e.target.result; };
+            rd.readAsDataURL(file);
+        }
+        function extractPalette(data, n) {
+            const bk = {};
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] < 125) continue;
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+                const key = `${r >> 4}-${g >> 4}-${b >> 4}`;
+                const satApprox = Math.max(r, g, b) - Math.min(r, g, b);   // 彩度の代理（0-255）
+                if (!bk[key]) {
+                    bk[key] = { r, g, b, sat: satApprox, c: 1 };
+                } else {
+                    bk[key].c++;
+                    // グループの代表色は「最も鮮やかだった実ピクセル」（平均にしない＝淡色化を防ぐ）
+                    if (satApprox > bk[key].sat) { bk[key].r = r; bk[key].g = g; bk[key].b = b; bk[key].sat = satApprox; }
+                }
+            }
+            let arr = Object.values(bk).map(o => {
+                const hsl = rgbToHsl(o.r, o.g, o.b);
+                return { r: o.r, g: o.g, b: o.b, h: hsl.h, s: hsl.s, l: hsl.l, score: o.c * (0.35 + hsl.s * 1.8) };
+            });
+            arr.sort((a, b) => b.score - a.score);
+
+            const chosen = [];
+            const hueGap = (a, b) => { let d = Math.abs(a.h - b.h); return Math.min(d, 360 - d); };
+            const LOWSAT = 0.12;
+
+            // 1st: 彩度のある色を、色相が離れたものだけ採用（青は1つに絞られる）
+            for (const c of arr) {
+                if (chosen.length >= n) break;
+                if (c.s < LOWSAT) continue;
+                if (chosen.every(o => o.s < LOWSAT || hueGap(o, c) >= 25)) chosen.push(c);
+            }
+            // 2nd: 無彩色（白/グレー/黒）は明度差で補充
+            for (const c of arr) {
+                if (chosen.length >= n) break;
+                if (chosen.includes(c) || c.s >= LOWSAT) continue;
+                if (chosen.every(o => o.s >= LOWSAT || Math.abs(o.l - c.l) >= 0.18)) chosen.push(c);
+            }
+            // 3rd: 足りなければ色相閾値を緩めて補充
+            let gap = 25;
+            while (chosen.length < n && gap > 6) {
+                gap -= 8;
+                for (const c of arr) {
+                    if (chosen.length >= n) break;
+                    if (chosen.includes(c)) continue;
+                    if (chosen.every(o => hueGap(o, c) >= gap || Math.abs(o.l - c.l) >= 0.18)) chosen.push(c);
+                }
+            }
+            // 最後の埋め
+            for (const c of arr) { if (chosen.length >= n) break; if (!chosen.includes(c)) chosen.push(c); }
+
+            chosen.sort((a, b) => a.h - b.h);   // 色相順に整列
+            return chosen.map(c => rgbToHex(c.r, c.g, c.b));
+        }
+        function renderChips() {
+            const c = document.getElementById('extractedChips');
+            const act = document.getElementById('extractedActions');
+            c.innerHTML = extractedColors.map(col =>
+                `<div class="ext-chip" style="background:${col}" title="${col}" onclick="copyText('${col}')"><span>${col}</span></div>`
+            ).join('');
+            act.style.display = extractedColors.length ? 'flex' : 'none';
+        }
+        function applyExtracted(targetMode) {
+            if (!extractedColors.length) { showToast('先に画像から抽出してください'); return; }
+            if (targetMode === 'mesh') {
+                points = extractedColors.map(col => ({ id: nextId++, x: 12 + Math.random() * 76, y: 12 + Math.random() * 76, color: col, r: blobSize }));
+                setMode('mesh');
+            } else {
+                points = extractedColors.map((col, i) => {
+                    const t = extractedColors.length === 1 ? 0.5 : i / (extractedColors.length - 1);
+                    return { id: nextId++, x: 15 + t * 70, y: 20 + t * 60, color: col, r: blobSize };
+                });
+                setMode('linear');
+            }
+            selectedId = null;
+            renderHandles(); renderPointList(); render();
+            showToast('抽出色を点に適用しました');
+        }
+        function copyText(t) { navigator.clipboard.writeText(t).then(() => showToast(`${t} をコピー`)).catch(() => {}); }
+
+        // ============================================================
+        // プリセット・履歴
+        // ============================================================
+        function renderPresets() {
+            presetsGrid.innerHTML = '';
+            presets.forEach(pr => {
+                const el = document.createElement('div');
+                el.className = 'preset-item';
+                el.title = pr.name;
+                el.style.background = previewCss(pr.mode, pr.points);
+                el.addEventListener('click', () => applyState(pr.mode, pr.points, pr.name));
+                presetsGrid.appendChild(el);
+            });
+        }
+        function previewCss(m, pts) {
+            if (m === 'mesh') {
+                return pts.map(p => `radial-gradient(circle at ${p.x}% ${p.y}%, ${p.color} 0%, transparent 60%)`).join(', ');
+            }
+            if (m === 'radial') {
+                const c0 = pts[0];
+                const s = pts.map((p, i) => `${p.color} ${i / (pts.length - 1) * 100}%`).join(', ');
+                return `radial-gradient(circle at ${c0.x}% ${c0.y}%, ${s})`;
+            }
+            const s = pts.map((p, i) => `${p.color} ${i / (pts.length - 1) * 100}%`).join(', ');
+            return `linear-gradient(135deg, ${s})`;
+        }
+        function applyState(m, pts, name) {
+            points = pts.map(p => ({ id: nextId++, x: p.x, y: p.y, color: p.color, r: p.r ?? blobSize }));
+            selectedId = null;
+            setMode(m);
+            renderHandles(); renderPointList(); render();
+            if (name) showToast(`「${name}」を適用しました`);
+        }
+
+        function manualSave() {
+            const nameInput = document.getElementById('saveNameInput');
+            const name = nameInput.value.trim() || `グラデ ${new Date().toLocaleString('ja-JP')}`;
+            history.unshift({
+                id: Date.now().toString(),
+                name, mode,
+                points: JSON.parse(JSON.stringify(points)),
+                favorite: false,
+                timestamp: Date.now()
+            });
+            if (history.length > 40) history = history.slice(0, 40);
+            localStorage.setItem('grafla-history-v2', JSON.stringify(history));
+            renderHistory();
+            nameInput.value = '';
+            showToast(`「${name}」を保存しました`);
+        }
+        function renderHistory() {
+            historyGrid.innerHTML = '';
+            if (!history.length) {
+                historyGrid.innerHTML = '<p class="hint-text" style="grid-column:1/-1;text-align:center;margin:0;padding:16px 0;">履歴はまだありません。</p>';
+                return;
+            }
+            history.forEach((it, idx) => {
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.title = it.name;
+                el.style.background = previewCss(it.mode, it.points);
+                el.innerHTML = `
+                    <div class="history-item-controls">
+                        <button class="history-control-btn favorite ${it.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav(${idx})" aria-label="お気に入り">${IC.star}</button>
+                        <button class="history-control-btn delete" onclick="event.stopPropagation(); delHistory(${idx})" aria-label="削除">${IC.x}</button>
+                    </div>
+                    <div class="history-timestamp">${new Date(it.timestamp).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}</div>
+                `;
+                el.addEventListener('click', () => applyState(it.mode, it.points, it.name));
+                historyGrid.appendChild(el);
+            });
+        }
+        function toggleFav(i) {
+            history[i].favorite = !history[i].favorite;
+            history.sort((a, b) => (b.favorite - a.favorite) || (b.timestamp - a.timestamp));
+            localStorage.setItem('grafla-history-v2', JSON.stringify(history));
+            renderHistory();
+        }
+        function delHistory(i) {
+            history.splice(i, 1);
+            localStorage.setItem('grafla-history-v2', JSON.stringify(history));
+            renderHistory();
+        }
+        function clearHistory() {
+            if (!history.length) { showToast('履歴がありません'); return; }
+            if (confirm('すべての履歴を削除しますか？')) {
+                history = [];
+                localStorage.removeItem('grafla-history-v2');
+                renderHistory();
+                showToast('履歴を削除しました');
+            }
+        }
+
+        // ============================================================
+        // 書き出し
+        // ============================================================
+        function copyCSS() {
+            navigator.clipboard.writeText(cssOutput.textContent).then(() => showToast('CSSをコピーしました')).catch(() => showToast('コピーに失敗しました'));
+        }
+        function exportImage(fmt) {
+            if (typeof domtoimage === 'undefined') { showToast('書き出し機能が使えません'); return; }
+            const wasHidden = handleLayer.classList.contains('hidden');
+            handleLayer.classList.add('hidden');
+            const opt = { quality: fmt === 'jpeg' ? 0.95 : 1, width: gradientPreview.offsetWidth * 2, height: gradientPreview.offsetHeight * 2, style: { transform: 'scale(2)', transformOrigin: 'top left' } };
+            const fn = fmt === 'jpeg' ? domtoimage.toJpeg : domtoimage.toPng;
+            fn(gradientPreview, opt).then(url => {
+                const a = document.createElement('a');
+                a.download = `grafla-${Date.now()}.${fmt}`;
+                a.href = url; a.click();
+                showToast(`${fmt.toUpperCase()} を保存しました`);
+            }).catch(() => showToast('書き出しに失敗しました'))
+              .finally(() => { if (!wasHidden) handleLayer.classList.remove('hidden'); });
+        }
+
+        // ============================================================
+        // トースト
+        // ============================================================
+        let toastT = null;
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastT);
+            toastT = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // ============================================================
+        // ナビ・モバイル
+        // ============================================================
+        function setupNav() {
+            const btns = document.querySelectorAll('.nav-btn');
+            const panels = document.querySelectorAll('.control-panel');
+            btns.forEach(b => b.addEventListener('click', () => {
+                btns.forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                panels.forEach(p => p.classList.remove('active'));
+                document.getElementById(b.dataset.target).classList.add('active');
+                if (window.innerWidth <= 1100) closeSidebar();
+            }));
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            mobileMenuToggle.innerHTML = IC.menu;
+        }
+        function setupMobile() {
+            mobileMenuToggle.innerHTML = IC.menu;
+            mobileMenuToggle.addEventListener('click', () => {
+                const open = sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active', open);
+                mobileMenuToggle.innerHTML = open ? IC.x : IC.menu;
+            });
+            sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+
+        // ============================================================
+        // 初期化
+        // ============================================================
+        function init() {
+            gradientPreview = document.getElementById('gradientPreview');
+            handleLayer = document.getElementById('handleLayer');
+            cssOutput = document.getElementById('cssOutput');
+            toast = document.getElementById('toast');
+            pointList = document.getElementById('pointList');
+            presetsGrid = document.getElementById('presetsGrid');
+            historyGrid = document.getElementById('historyGrid');
+            sidebar = document.getElementById('sidebar');
+            sidebarOverlay = document.getElementById('sidebarOverlay');
+            mobileMenuToggle = document.getElementById('mobileMenuToggle');
+
+            // アイコン注入
+            document.getElementById('logoIcon').innerHTML = IC.logo;
+            document.querySelectorAll('.nav-ic').forEach(el => { el.innerHTML = IC[el.dataset.ic] || ''; });
+
+            // モードセグメント
+            document.querySelectorAll('#modeSegment button').forEach(b =>
+                b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+            // 調整
+            document.getElementById('handleToggle').addEventListener('change', e => {
+                showHandles = e.target.checked;
+                handleLayer.classList.toggle('hidden', !showHandles);
+            });
+            document.getElementById('blobSize').addEventListener('input', e => {
+                blobSize = parseInt(e.target.value);
+                document.getElementById('blobSizeValue').textContent = blobSize + '%';
+                points.forEach(p => p.r = blobSize);
+                renderPointList();
+                if (mode === 'mesh') render();
+            });
+            document.getElementById('globalOpacity').addEventListener('input', e => {
+                globalOpacity = parseInt(e.target.value);
+                document.getElementById('opacityValue').textContent = globalOpacity + '%';
+                render();
+            });
+            document.getElementById('animateGradient').addEventListener('change', e => {
+                gradientPreview.classList.toggle('gradient-animation', e.target.checked);
+            });
+
+            // プレビュー操作
+            handleLayer.addEventListener('mousedown', onHandleDown);
+            handleLayer.addEventListener('touchstart', onHandleDown, { passive: false });
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('touchend', onUp);
+            gradientPreview.addEventListener('click', onPreviewClick);
+
+            setupNav();
+            setupMobile();
+            document.getElementById('blobGroup').style.display = 'none';
+
+            renderHandles();
+            renderPointList();
+            renderPresets();
+            renderHistory();
+            render();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
