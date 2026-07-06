@@ -69,6 +69,23 @@
         }
         .mobile-menu-toggle:active { transform: scale(0.94); }
 
+        .app-title {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1002;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 1.15rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            color: var(--accent-color);
+            pointer-events: none;
+            user-select: none;
+        }
+        .app-title .icon { width: 1.05rem; height: 1.05rem; }
+
         .sidebar-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.5);
@@ -93,7 +110,8 @@
             display: flex; align-items: center; gap: 10px;
             margin-bottom: 24px; padding: 4px 2px;
             color: var(--accent-color);
-            font-size: 1.4rem; font-weight: 700;
+            font-size: 1.4rem; font-weight: 300;
+            letter-spacing: 0.02em;
         }
         .logo-area .icon { width: 1.3rem; height: 1.3rem; }
 
@@ -321,8 +339,8 @@
         .slider-value { font-size: 0.82rem; min-width: 44px; text-align: right; color: var(--text-primary); font-weight: 500; }
 
         /* トグルスイッチ */
-        .switch-row { display: flex; align-items: center; justify-content: space-between; }
-        .switch-row label { font-size: 0.85rem; color: var(--text-primary); }
+        .switch-row { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .switch-row > span:first-child { font-size: 0.85rem; color: var(--text-primary); }
         .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .switch-track {
@@ -416,6 +434,9 @@
         ::-webkit-scrollbar-track { background: var(--bg-canvas); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
+        @media (min-width: 1101px) {
+            .app-title { display: none; }
+        }
         @media (max-width: 1100px) {
             .mobile-menu-toggle { display: block; }
             .sidebar {
@@ -437,6 +458,7 @@
 </head>
 <body>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="app-title"><span id="appTitleIcon"></span>Grafla</div>
     <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="メニュー"></button>
 
     <div class="main-container">
@@ -488,13 +510,13 @@
                     <div class="panel-section">
                         <div class="panel-header"><h3 class="panel-title">調整</h3></div>
                         <div class="control-group">
-                            <div class="switch-row">
-                                <label for="handleToggle">ハンドルを表示</label>
+                            <label class="switch-row">
+                                <span>ハンドルを表示</span>
                                 <span class="switch">
                                     <input type="checkbox" id="handleToggle" checked>
                                     <span class="switch-track"></span>
                                 </span>
-                            </div>
+                            </label>
                         </div>
                         <div class="control-group" id="blobGroup">
                             <label class="control-label">メッシュの滲み（全点まとめて）</label>
@@ -678,6 +700,21 @@
         function hexToRgba(hex, a) {
             const c = hexToRgb(hex);
             return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
+        }
+        function hslToRgb(h, s, l) {
+            h /= 360;
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+            if (s === 0) return { r: l * 255, g: l * 255, b: l * 255 };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            return { r: hue2rgb(p, q, h + 1 / 3) * 255, g: hue2rgb(p, q, h) * 255, b: hue2rgb(p, q, h - 1 / 3) * 255 };
         }
 
         // ============================================================
@@ -951,6 +988,7 @@
                 catch (err) { showToast('この画像は解析できませんでした'); return; }
                 extractedColors = extractPalette(data, 5);
                 renderChips();
+                applyExtracted(mode);   // 抽出した瞬間、いまのモードでプレビューに即反映
                 showToast('画像から5色を抽出しました');
             };
             img.onerror = () => showToast('画像の読み込みに失敗しました');
@@ -1009,7 +1047,13 @@
             for (const c of arr) { if (chosen.length >= n) break; if (!chosen.includes(c)) chosen.push(c); }
 
             chosen.sort((a, b) => a.h - b.h);   // 色相順に整列
-            return chosen.map(c => rgbToHex(c.r, c.g, c.b));
+            // 縮小・量子化で落ちた彩度を補償（元画像の鮮やかさに寄せる）
+            return chosen.map(c => {
+                const s = Math.min(1, c.s * 1.45);
+                const l = c.l > 0.62 ? 0.62 + (c.l - 0.62) * 0.6 : c.l;   // 明るすぎる淡色は少し締める
+                const rgb = hslToRgb(c.h, s, l);
+                return rgbToHex(rgb.r, rgb.g, rgb.b);
+            });
         }
         function renderChips() {
             const c = document.getElementById('extractedChips');
@@ -1029,7 +1073,7 @@
                     const t = extractedColors.length === 1 ? 0.5 : i / (extractedColors.length - 1);
                     return { id: nextId++, x: 15 + t * 70, y: 20 + t * 60, color: col, r: blobSize };
                 });
-                setMode('linear');
+                setMode(targetMode === 'radial' ? 'radial' : 'linear');
             }
             selectedId = null;
             renderHandles(); renderPointList(); render();
@@ -1208,6 +1252,7 @@
 
             // アイコン注入
             document.getElementById('logoIcon').innerHTML = IC.logo;
+            document.getElementById('appTitleIcon').innerHTML = IC.logo;
             document.querySelectorAll('.nav-ic').forEach(el => { el.innerHTML = IC[el.dataset.ic] || ''; });
 
             // モードセグメント
