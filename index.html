@@ -296,6 +296,14 @@
             border: 1px solid var(--border-color);
             border-radius: 50%;
         }
+        .pt-swatch {
+            width: 36px; height: 36px; flex-shrink: 0;
+            padding: 0; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); cursor: pointer;
+            transition: transform 0.1s, border-color var(--t);
+        }
+        .pt-swatch:hover { border-color: var(--accent-color); }
+        .pt-swatch:active { transform: scale(0.94); }
         .point-row input[type="color"] {
             width: 36px; height: 36px; flex-shrink: 0;
             padding: 0; border: 1px solid var(--border-color);
@@ -417,8 +425,8 @@
         }
         .css-output:focus { outline: none; border-color: var(--accent-color); }
 
-        .gradient-animation { background-size: 300% 300% !important; animation: gradient-anim 12s ease infinite; }
-        @keyframes gradient-anim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .gradient-animation { background-size: 300% 300% !important; animation: grafla-flow 12s ease infinite; }
+        @keyframes grafla-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
         /* トースト */
         .toast {
@@ -454,6 +462,212 @@
             .gradient-preview { height: 260px; }
             .preset-grid, .history-grid { grid-template-columns: repeat(2, 1fr); }
         }
+        .color-picker-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--t), visibility var(--t);
+            padding: 16px;
+        }
+
+        .color-picker-modal.show { opacity: 1; visibility: visible; }
+
+        .color-picker-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .picker-title { color: var(--text-primary); font-size: 1.1rem; font-weight: 600; }
+
+        .picker-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            transition: background-color var(--t), color var(--t);
+        }
+
+        .picker-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        .picker-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 18px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 5px;
+        }
+
+        .picker-tab {
+            flex: 1;
+            padding: 9px 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background-color var(--t), color var(--t);
+        }
+
+        .picker-tab.active { background: var(--accent-color); color: var(--on-accent); }
+
+        .picker-view { display: none; }
+        .picker-view.active { display: block; }
+
+        /* スペクトラム（機能グラデ：保持） */
+        .spectrum-picker {
+            width: 100%;
+            height: 180px;
+            border-radius: var(--radius-sm);
+            position: relative;
+            cursor: crosshair;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .spectrum-cursor {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+        }
+
+        /* 色相スライダー（機能グラデ：保持） */
+        .hue-slider {
+            width: 100%;
+            height: 18px;
+            border-radius: 99px;
+            background: linear-gradient(to right,
+                #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%,
+                #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .hue-cursor {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+        }
+
+        .grid-picker {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .grid-color {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: transform 0.15s;
+        }
+
+        .grid-color:hover { transform: scale(1.12); }
+
+        .slider-view { display: flex; flex-direction: column; gap: 14px; }
+        .slider-group { display: flex; align-items: center; gap: 14px; }
+        .slider-label { color: var(--text-primary); font-size: 0.85rem; font-weight: 500; min-width: 30px; }
+
+        .color-slider {
+            flex: 1;
+            height: 18px;
+            border-radius: 99px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .slider-cursor {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+        }
+
+        .slider-value { color: var(--text-muted); font-family: monospace; font-size: 0.75rem; min-width: 34px; text-align: right; }
+
+        .picker-preview {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            padding: 14px;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            margin-bottom: 18px;
+        }
+
+        .preview-color { width: 56px; height: 56px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+        .preview-info { flex: 1; }
+        .preview-hex { color: var(--text-primary); font-family: monospace; font-size: 1.05rem; font-weight: 600; margin-bottom: 4px; }
+        .preview-values { color: var(--text-muted); font-size: 0.75rem; font-family: monospace; }
+
+        .picker-actions { display: flex; gap: 10px; }
+
+        .picker-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background-color var(--t), transform 0.1s;
+        }
+
+        .picker-btn:active { transform: scale(0.98); }
+        .picker-btn-primary { background: var(--accent-color); color: var(--on-accent); }
+        .picker-btn-primary:hover { background: var(--accent-hover); }
+        .picker-btn-secondary { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .picker-btn-secondary:hover { border-color: var(--accent-color); }
+
     </style>
 </head>
 <body>
@@ -468,7 +682,6 @@
             </div>
             <nav class="main-nav">
                 <button class="nav-btn active" data-target="panel-design"><span class="nav-ic" data-ic="droplet"></span><span>デザイン</span></button>
-                <button class="nav-btn" data-target="panel-align"><span class="nav-ic" data-ic="move"></span><span>調整</span></button>
                 <button class="nav-btn" data-target="panel-image"><span class="nav-ic" data-ic="image"></span><span>画像から抽出</span></button>
                 <button class="nav-btn" data-target="panel-history"><span class="nav-ic" data-ic="history"></span><span>履歴・プリセット</span></button>
                 <button class="nav-btn" data-target="panel-export"><span class="nav-ic" data-ic="download"></span><span>書き出し</span></button>
@@ -503,10 +716,6 @@
                         <button class="mini-btn" style="margin:10px 0 18px;width:100%;justify-content:center" onclick="alignPoints()"><span class="nav-ic" data-ic="move"></span>いまのモードに整列する</button>
                         <div id="pointList"></div>
                     </div>
-                </div>
-
-                <!-- 整列・調整 -->
-                <div id="panel-align" class="control-panel">
                     <div class="panel-section">
                         <div class="panel-header"><h3 class="panel-title">調整</h3></div>
                         <div class="control-group">
@@ -517,6 +726,13 @@
                                     <span class="switch-track"></span>
                                 </span>
                             </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">境界のくっきり度</label>
+                            <div class="slider-group">
+                                <input type="range" id="sharpness" class="slider" min="0" max="90" value="0">
+                                <span class="slider-value" id="sharpnessValue">0%</span>
+                            </div>
                         </div>
                         <div class="control-group" id="blobGroup">
                             <label class="control-label">メッシュの滲み（全点まとめて）</label>
@@ -535,7 +751,7 @@
                         <div class="control-group">
                             <label class="control-label">エフェクト</label>
                             <div class="checkbox-group">
-                                <label><input type="checkbox" id="animateGradient"> アニメーション</label>
+                                <label><input type="checkbox" id="animateGradient"> アニメーション（動くCSSを書き出す）</label>
                             </div>
                         </div>
                     </div>
@@ -594,6 +810,68 @@
         </main>
     </div>
 
+            <div class="color-picker-modal" id="colorPickerModal">
+            <div class="color-picker-content">
+                <div class="picker-header">
+                    <h3 class="picker-title">カラー選択</h3>
+                    <button class="picker-close" id="pickerClose"></button>
+                </div>
+
+                <div class="picker-tabs">
+                    <button class="picker-tab active" data-view="spectrum">スペクトラム</button>
+                    <button class="picker-tab" data-view="slider">スライダー</button>
+                    <button class="picker-tab" data-view="grid">グリッド</button>
+                </div>
+
+                <div class="picker-view active" id="spectrumView">
+                    <div class="spectrum-picker" id="spectrumPicker">
+                        <div class="spectrum-cursor" id="spectrumCursor"></div>
+                    </div>
+                    <div class="hue-slider" id="hueSlider">
+                        <div class="hue-cursor" id="hueCursor"></div>
+                    </div>
+                </div>
+
+                <div class="picker-view" id="sliderView">
+                    <div class="slider-view">
+                        <div class="slider-group">
+                            <span class="slider-label">赤</span>
+                            <div class="color-slider" id="redSlider"><div class="slider-cursor" id="redCursor"></div></div>
+                            <span class="slider-value" id="redValue">255</span>
+                        </div>
+                        <div class="slider-group">
+                            <span class="slider-label">緑</span>
+                            <div class="color-slider" id="greenSlider"><div class="slider-cursor" id="greenCursor"></div></div>
+                            <span class="slider-value" id="greenValue">255</span>
+                        </div>
+                        <div class="slider-group">
+                            <span class="slider-label">青</span>
+                            <div class="color-slider" id="blueSlider"><div class="slider-cursor" id="blueCursor"></div></div>
+                            <span class="slider-value" id="blueValue">255</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="picker-view" id="gridView">
+                    <div class="grid-picker" id="gridPicker"></div>
+                </div>
+
+                <div class="picker-preview">
+                    <div class="preview-color" id="previewColor"></div>
+                    <div class="preview-info">
+                        <div class="preview-hex" id="previewHex">#FF0000</div>
+                        <div class="preview-values" id="previewValues">RGB(255, 0, 0)</div>
+                    </div>
+                </div>
+
+                <div class="picker-actions">
+                    <button class="picker-btn picker-btn-secondary" id="pickerCancel">キャンセル</button>
+                    <button class="picker-btn picker-btn-primary" id="pickerOk">適用</button>
+                </div>
+            </div>
+        </div>
+
+
     <div id="toast" class="toast"></div>
 
     <script>
@@ -651,6 +929,8 @@
         let mode = 'linear';           // linear | radial | mesh
         let showHandles = true;
         let blobSize = 60;
+        let sharpness = 0;   // 0=なめらか, 90=くっきり境界（全モード共通）
+        let animateOn = false;
         let globalOpacity = 100;
         let selectedId = null;
         let extractedColors = [];
@@ -717,6 +997,160 @@
             return { r: hue2rgb(p, q, h + 1 / 3) * 255, g: hue2rgb(p, q, h) * 255, b: hue2rgb(p, q, h - 1 / 3) * 255 };
         }
 
+        // ---- カラーピッカー（スイフラから移植：グリッド/スペクトラム/スライダ） ----
+        let colorPicker = { currentColor: '#FF0000', currentView: 'spectrum', isOpen: false, hsl: { h: 0, s: 1, l: 0.5 }, rgb: { r: 255, g: 0, b: 0 }, callback: null };
+
+        function openColorPicker(initialColor, callback) {
+            colorPicker.currentColor = initialColor;
+            colorPicker.callback = callback;
+            colorPicker.isOpen = true;
+            const rgb = hexToRgb(initialColor);
+            colorPicker.rgb = rgb;
+            colorPicker.hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+            updatePickerUI();
+            document.getElementById('colorPickerModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeColorPicker() {
+            colorPicker.isOpen = false;
+            document.getElementById('colorPickerModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        function updatePickerUI() { updatePreview(); updateSpectrumView(); updateSliderView(); }
+        function updatePreview() {
+            const hex = rgbToHex(colorPicker.rgb.r, colorPicker.rgb.g, colorPicker.rgb.b);
+            colorPicker.currentColor = hex;
+            document.getElementById('previewColor').style.backgroundColor = hex;
+            document.getElementById('previewHex').textContent = hex;
+            document.getElementById('previewValues').textContent = `RGB(${Math.round(colorPicker.rgb.r)}, ${Math.round(colorPicker.rgb.g)}, ${Math.round(colorPicker.rgb.b)})`;
+        }
+        function updateSpectrumView() {
+            const spectrum = document.getElementById('spectrumPicker');
+            const hueColor = hslToRgb(colorPicker.hsl.h, 1, 0.5);
+            const hueHex = rgbToHex(hueColor.r, hueColor.g, hueColor.b);
+            spectrum.style.background = `linear-gradient(to top, #000 0%, transparent 100%), linear-gradient(to right, #fff 0%, transparent 100%), ${hueHex}`;
+            const sc = document.getElementById('spectrumCursor');
+            sc.style.left = `${Math.max(0, Math.min(100, colorPicker.hsl.s * 100))}%`;
+            sc.style.top = `${Math.max(0, Math.min(100, (1 - colorPicker.hsl.l) * 100))}%`;
+            document.getElementById('hueCursor').style.left = `${(colorPicker.hsl.h / 360) * 100}%`;
+        }
+        function updateSliderView() {
+            const r = Math.round(colorPicker.rgb.r), g = Math.round(colorPicker.rgb.g), b = Math.round(colorPicker.rgb.b);
+            document.getElementById('redSlider').style.background = `linear-gradient(to right, rgb(0, ${g}, ${b}), rgb(255, ${g}, ${b}))`;
+            document.getElementById('greenSlider').style.background = `linear-gradient(to right, rgb(${r}, 0, ${b}), rgb(${r}, 255, ${b}))`;
+            document.getElementById('blueSlider').style.background = `linear-gradient(to right, rgb(${r}, ${g}, 0), rgb(${r}, ${g}, 255))`;
+            document.getElementById('redCursor').style.left = `${(r / 255) * 100}%`;
+            document.getElementById('greenCursor').style.left = `${(g / 255) * 100}%`;
+            document.getElementById('blueCursor').style.left = `${(b / 255) * 100}%`;
+            document.getElementById('redValue').textContent = r;
+            document.getElementById('greenValue').textContent = g;
+            document.getElementById('blueValue').textContent = b;
+        }
+        function generateColorGrid() {
+            const grid = document.getElementById('gridPicker');
+            grid.innerHTML = '';
+            const colors = [
+                '#000000','#333333','#666666','#999999','#cccccc','#ffffff',
+                '#ff0000','#ff6666','#ff9999','#ffcccc','#660000','#990000',
+                '#ff6600','#ff9933','#ffcc66','#ffe699','#cc3300','#cc6600',
+                '#ffff00','#ffff66','#ffff99','#ffffcc','#cccc00','#999900',
+                '#00ff00','#66ff66','#99ff99','#ccffcc','#006600','#009900',
+                '#00ffff','#66ffff','#99ffff','#ccffff','#006666','#009999',
+                '#0000ff','#6666ff','#9999ff','#ccccff','#000066','#000099',
+                '#ff00ff','#ff66ff','#ff99ff','#ffccff','#660066','#990099',
+                '#996633','#cc9966','#ffcc99','#ffe6cc','#663300','#cc6600',
+                '#ff69b4','#ffb6c1','#ffc0cb','#ffe4e1','#c71585','#ff1493',
+                '#ff4500','#32cd32','#1e90ff','#ffd700','#8a2be2','#dc143c'
+            ];
+            colors.forEach(color => {
+                const el = document.createElement('div');
+                el.className = 'grid-color';
+                el.style.backgroundColor = color;
+                el.addEventListener('click', () => {
+                    const rgb = hexToRgb(color);
+                    colorPicker.rgb = rgb;
+                    colorPicker.hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                    updatePickerUI();
+                });
+                grid.appendChild(el);
+            });
+        }
+
+        function setupSpectrumPicker() {
+            const sp = document.getElementById('spectrumPicker');
+            const update = (e) => {
+                const rect = sp.getBoundingClientRect();
+                const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+                colorPicker.hsl.s = x;
+                colorPicker.hsl.l = Math.max(0, Math.min(1, 1 - y));
+                colorPicker.rgb = hslToRgb(colorPicker.hsl.h, colorPicker.hsl.s, colorPicker.hsl.l);
+                updatePickerUI();
+            };
+            sp.addEventListener('mousedown', (e) => {
+                e.preventDefault(); update(e);
+                const mv = (ev) => { ev.preventDefault(); update(ev); };
+                const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+            sp.addEventListener('touchstart', (e) => {
+                e.preventDefault(); update(e.touches[0]);
+                const mv = (ev) => { ev.preventDefault(); update(ev.touches[0]); };
+                const end = () => { document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', end); };
+                document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', end);
+            });
+        }
+
+        function setupHueSlider() {
+            const hs = document.getElementById('hueSlider');
+            const update = (e) => {
+                const rect = hs.getBoundingClientRect();
+                const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                colorPicker.hsl.h = x * 360;
+                colorPicker.rgb = hslToRgb(colorPicker.hsl.h, colorPicker.hsl.s, colorPicker.hsl.l);
+                updatePickerUI();
+            };
+            hs.addEventListener('mousedown', (e) => {
+                e.preventDefault(); update(e);
+                const mv = (ev) => { ev.preventDefault(); update(ev); };
+                const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+            hs.addEventListener('touchstart', (e) => {
+                e.preventDefault(); update(e.touches[0]);
+                const mv = (ev) => { ev.preventDefault(); update(ev.touches[0]); };
+                const end = () => { document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', end); };
+                document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', end);
+            });
+        }
+
+        function setupRGBSliders() {
+            ['red', 'green', 'blue'].forEach((channel, index) => {
+                const slider = document.getElementById(channel + 'Slider');
+                const ch = ['r', 'g', 'b'][index];
+                const update = (e) => {
+                    const rect = slider.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    colorPicker.rgb[ch] = x * 255;
+                    colorPicker.hsl = rgbToHsl(colorPicker.rgb.r, colorPicker.rgb.g, colorPicker.rgb.b);
+                    updatePickerUI();
+                };
+                slider.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); update(e);
+                    const mv = (ev) => { ev.preventDefault(); update(ev); };
+                    const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
+                    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+                });
+                slider.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); update(e.touches[0]);
+                    const mv = (ev) => { ev.preventDefault(); update(ev.touches[0]); };
+                    const end = () => { document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', end); };
+                    document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', end);
+                });
+            });
+        }
+
+
         // ============================================================
         // グラデCSS生成（点ベース・3モード）
         // ============================================================
@@ -725,15 +1159,42 @@
             return v || '#ffffff';
         }
 
+        // 境界のくっきり度を反映したストップ文字列を生成
+        // sharpness 0 = なめらか（従来）、90 = 各色帯がほぼベタ塗りで境界くっきり
+        function buildStopString(stops) {
+            if (sharpness <= 0 || stops.length < 2) {
+                return stops.map(o => `${o.color} ${o.pos.toFixed(1)}%`).join(', ');
+            }
+            const parts = [];
+            for (let i = 0; i < stops.length; i++) {
+                const cur = stops[i];
+                if (i > 0) {
+                    const prev = stops[i - 1];
+                    const mid = (prev.pos + cur.pos) / 2;
+                    // sharpness が高いほど、境界（mid）に向けて両色を寄せる → 切り替わりが急に
+                    const f = sharpness / 100;
+                    const prevEnd = prev.pos + (mid - prev.pos) * f;
+                    const curStart = cur.pos - (cur.pos - mid) * f;
+                    parts.push(`${prev.color} ${prevEnd.toFixed(1)}%`);
+                    parts.push(`${cur.color} ${curStart.toFixed(1)}%`);
+                } else {
+                    parts.push(`${cur.color} ${cur.pos.toFixed(1)}%`);
+                }
+            }
+            return parts.join(', ');
+        }
+
         function buildGradient() {
             const rect = gradientPreview.getBoundingClientRect();
             const W = rect.width || 420, H = rect.height || 380;
 
             if (mode === 'mesh') {
                 if (!points.length) return { plain: meshBg(), out: `background: ${meshBg()};` };
-                const layers = points.map(p =>
-                    `radial-gradient(circle at ${p.x.toFixed(1)}% ${p.y.toFixed(1)}%, ${hexToRgba(p.color, 1)} 0%, ${hexToRgba(p.color, 0)} ${(p.r ?? blobSize)}%)`
-                );
+                const layers = points.map(p => {
+                    const r = (p.r ?? blobSize);
+                    const solid = (sharpness / 100) * r;   // くっきり度が高いほど中心のベタ塗り域が広がり縁が締まる
+                    return `radial-gradient(circle at ${p.x.toFixed(1)}% ${p.y.toFixed(1)}%, ${hexToRgba(p.color, 1)} ${solid.toFixed(1)}%, ${hexToRgba(p.color, 0)} ${r}%)`;
+                });
                 return {
                     bg: meshBg(),
                     img: layers.join(', '),
@@ -759,7 +1220,7 @@
                     t = Math.max(0, Math.min(1, t));
                     return { pos: t * 100, color: p.color };
                 }).sort((a, b) => a.pos - b.pos);
-                const s = stops.map(o => `${o.color} ${o.pos.toFixed(1)}%`).join(', ');
+                const s = buildStopString(stops);
                 const css = `linear-gradient(${ang.toFixed(1)}deg, ${s})`;
                 return { css, out: `background: ${css};` };
             }
@@ -770,7 +1231,7 @@
             const maxD = Math.max(...dists) || 1;
             const stops = points.map((p, i) => ({ pos: dists[i] / maxD * 100, color: p.color }))
                 .sort((a, b) => a.pos - b.pos);
-            const s = stops.map(o => `${o.color} ${o.pos.toFixed(1)}%`).join(', ');
+            const s = buildStopString(stops);
             const css = `radial-gradient(circle at ${c0.x.toFixed(1)}% ${c0.y.toFixed(1)}%, ${s})`;
             return { css, out: `background: ${css};` };
         }
@@ -791,7 +1252,13 @@
                 gradientPreview.style.background = g.css;
             }
             gradientPreview.style.opacity = globalOpacity / 100;
-            cssOutput.textContent = g.out + (mode === 'mesh' ? '' : `\nopacity: ${globalOpacity / 100};`);
+            let out = g.out + (mode === 'mesh' ? '' : `\nopacity: ${globalOpacity / 100};`);
+            if (animateOn) {
+                // 貼ればそのまま動く完全なCSS（background-size + animation + keyframes）
+                out += `\nbackground-size: 300% 300%;\nanimation: grafla-flow 12s ease infinite;`;
+                out += `\n\n@keyframes grafla-flow {\n  0% { background-position: 0% 50%; }\n  50% { background-position: 100% 50%; }\n  100% { background-position: 0% 50%; }\n}`;
+            }
+            cssOutput.textContent = out;
             positionHandles();
         }
 
@@ -832,7 +1299,7 @@
                 row.innerHTML = `
                     <div class="point-main">
                         <span class="point-index">${i + 1}</span>
-                        <input type="color" value="${p.color}" data-id="${p.id}" class="pt-color">
+                        <button class="pt-swatch" data-id="${p.id}" style="background:${p.color}" aria-label="色を選択"></button>
                         <input type="text" value="${p.color}" data-id="${p.id}" class="hex-input pt-hex" maxlength="7">
                         <button class="point-del" data-id="${p.id}" ${points.length <= 2 ? 'disabled' : ''} aria-label="削除">${IC.trash}</button>
                     </div>
@@ -844,11 +1311,8 @@
                 `;
                 pointList.appendChild(row);
             });
-            pointList.querySelectorAll('.pt-color').forEach(el => el.addEventListener('input', e => {
-                const p = points.find(pt => pt.id == e.target.dataset.id);
-                p.color = e.target.value;
-                e.target.nextElementSibling.value = e.target.value;
-                render();
+            pointList.querySelectorAll('.pt-swatch').forEach(el => el.addEventListener('click', e => {
+                openPointPicker(parseInt(e.currentTarget.dataset.id));
             }));
             pointList.querySelectorAll('.pt-hex').forEach(el => el.addEventListener('input', e => {
                 let v = e.target.value.trim();
@@ -856,7 +1320,8 @@
                 if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
                     const p = points.find(pt => pt.id == e.target.dataset.id);
                     p.color = v;
-                    e.target.previousElementSibling.value = v;
+                    const sw = e.target.previousElementSibling;
+                    if (sw) sw.style.background = v;
                     render();
                 }
             }));
@@ -959,7 +1424,10 @@
             render();
         }
         function onUp() {
-            if (dragId !== null) { renderPointList(); }
+            if (dragId !== null) {
+                if (!didDrag) openPointPicker(dragId);  // タップ（動かしてない）なら色編集
+                else renderPointList();
+            }
             dragId = null;
         }
         function onPreviewClick(e) {
@@ -1264,6 +1732,11 @@
                 showHandles = e.target.checked;
                 handleLayer.classList.toggle('hidden', !showHandles);
             });
+            document.getElementById('sharpness').addEventListener('input', e => {
+                sharpness = parseInt(e.target.value);
+                document.getElementById('sharpnessValue').textContent = sharpness + '%';
+                render();
+            });
             document.getElementById('blobSize').addEventListener('input', e => {
                 blobSize = parseInt(e.target.value);
                 document.getElementById('blobSizeValue').textContent = blobSize + '%';
@@ -1277,7 +1750,9 @@
                 render();
             });
             document.getElementById('animateGradient').addEventListener('change', e => {
-                gradientPreview.classList.toggle('gradient-animation', e.target.checked);
+                animateOn = e.target.checked;
+                gradientPreview.classList.toggle('gradient-animation', animateOn);
+                render();   // 出力CSSにも即反映
             });
 
             // プレビュー操作
@@ -1291,6 +1766,7 @@
 
             setupNav();
             setupMobile();
+            setupColorPicker();
             document.getElementById('blobGroup').style.display = 'none';
 
             renderHandles();
@@ -1298,6 +1774,47 @@
             renderPresets();
             renderHistory();
             render();
+        }
+
+        function setupColorPicker() {
+            generateColorGrid();
+            setupSpectrumPicker();
+            setupHueSlider();
+            setupRGBSliders();
+            const modal = document.getElementById('colorPickerModal');
+            const cancel = document.getElementById('pickerCancel');
+            const ok = document.getElementById('pickerOk');
+            if (cancel) cancel.addEventListener('click', closeColorPicker);
+            if (ok) ok.addEventListener('click', () => {
+                if (colorPicker.callback) colorPicker.callback(colorPicker.currentColor);
+                closeColorPicker();
+            });
+            if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeColorPicker(); });
+            document.querySelectorAll('.picker-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const view = e.target.dataset.view;
+                    colorPicker.currentView = view;
+                    document.querySelectorAll('.picker-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('.picker-view').forEach(v => v.classList.remove('active'));
+                    const target = document.getElementById(view + 'View');
+                    if (target) target.classList.add('active');
+                });
+            });
+        }
+
+        // 点の色をピッカーで編集
+        function openPointPicker(pointId) {
+            const p = points.find(pt => pt.id === pointId);
+            if (!p) return;
+            selectedId = p.id;
+            positionHandles();
+            openColorPicker(p.color, (newColor) => {
+                p.color = newColor;
+                renderHandles();
+                renderPointList();
+                render();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', init);
